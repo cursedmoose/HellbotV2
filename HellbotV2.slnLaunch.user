@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Test",
+    "Projects": [
+      {
+        "Path": "Hellbot.Web\\Hellbot.UI.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "Hellbot.Service\\Hellbot.Service.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      }
+    ]
+  }
+]

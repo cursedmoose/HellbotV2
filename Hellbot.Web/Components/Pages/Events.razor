@@ -1,0 +1,48 @@
+﻿@page "/events"
+@using Microsoft.AspNetCore.SignalR.Client
+@rendermode InteractiveServer
+
+<h3>Live Events</h3>
+
+<ul>
+    @foreach (var evt in events)
+    {
+        <li>
+            <b>@evt.Type</b> - @evt.Timestamp
+        </li>
+    }
+</ul>
+
+@code {
+
+    private List<EventViewModel> events = new();
+
+    private HubConnection? hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl("http://localhost:5130/eventsHub") // backend URL
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<EventViewModel>("ReceiveEvent", evt =>
+        {
+            events.Insert(0, evt);
+
+            if (events.Count > 100)
+                events.RemoveAt(events.Count - 1);
+
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    public class EventViewModel
+    {
+        public string Type { get; set; } = "";
+        public DateTime Timestamp { get; set; }
+        public object Data { get; set; } = default!;
+    }
+}

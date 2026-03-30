@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Hellbot.Core/Hellbot.Core.csproj" />
+  <Project Path="Hellbot.Service/Hellbot.Service.csproj" />
+  <Project Path="Hellbot.Web/Hellbot.UI.csproj" />
+</Solution>

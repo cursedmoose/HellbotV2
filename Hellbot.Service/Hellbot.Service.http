@@ -1,0 +1,6 @@
+@Hellbot.Service_HostAddress = http://localhost:5130
+
+GET {{Hellbot.Service_HostAddress}}/api/events/test
+Accept: application/json
+
+###
