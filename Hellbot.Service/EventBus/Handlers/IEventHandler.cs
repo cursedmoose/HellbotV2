@@ -1,7 +1,9 @@
-﻿namespace Hellbot.Service.EventBus.Handlers
+﻿using Hellbot.Core.Events;
+
+namespace Hellbot.Service.EventBus.Handlers
 {
     public interface IEventHandler
     {
-        Task Handle(IEventHandler evt);
+        void Register(IEventBus bus);
     }
 }

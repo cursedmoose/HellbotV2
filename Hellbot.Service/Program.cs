@@ -1,8 +1,10 @@
 using Hellbot.Core.Events;
 using Hellbot.Service.EventBus;
+using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.EventBus.Handlers.Global;
 using Hellbot.Service.EventBus.Handlers.Test;
 using Hellbot.Service.EventBus.Producers;
+using Scrutor;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +12,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
 
 // Handlers
-builder.Services.AddSingleton<EventLogger>();
-builder.Services.AddSingleton<TestMessageHandler>();
+builder.Services.Scan(scan => scan
+    .FromAssembliesOf(typeof(IEventHandler))
+    .AddClasses(classes => classes.AssignableTo<IEventHandler>())
+    .UsingRegistrationStrategy(RegistrationStrategy.Append)
+    .AsImplementedInterfaces()
+    .WithSingletonLifetime());
 
 // Producers
 builder.Services.AddHostedService<HeartbeatProducer>();
@@ -40,7 +46,13 @@ app.UseAuthorization();
 app.MapHub<EventHub>("/eventsHub");
 app.MapControllers();
 
-app.Services.GetRequiredService<EventLogger>();
-app.Services.GetRequiredService<SignalREventBroadcaster>();
+using (var scope = app.Services.CreateScope())
+{
+    var handlers = scope.ServiceProvider.GetServices<IEventHandler>().ToList();
+    foreach (var handler in handlers)
+    {
+        handler.Register(scope.ServiceProvider.GetRequiredService<IEventBus>());
+    }
+}
 
 app.Run();

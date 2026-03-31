@@ -4,14 +4,19 @@ using Hellbot.Service.EventBus.Handlers.Global;
 
 namespace Hellbot.Service.EventBus.Handlers.Test
 {
-    public class TestMessageHandler
+    public class TestMessageHandler: IEventHandler
     {
-        private readonly ILogger<EventLogger> _logger;
+        private readonly ILogger<TestMessageHandler> _logger;
 
-        public TestMessageHandler(IEventBus bus, ILogger<EventLogger> logger)
+        public TestMessageHandler(ILogger<TestMessageHandler> logger)
         {
             _logger = logger;
+        }
+
+        public void Register(IEventBus bus)
+        {
             bus.Subscribe<TestMessageEvent>(Handle);
+            _logger.LogInformation("TestMessage Handler initialized.");
         }
 
         private Task Handle(TestMessageEvent evt)
