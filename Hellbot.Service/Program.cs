@@ -1,13 +1,29 @@
 using Hellbot.Core.Events;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
-using Hellbot.Service.EventBus.Handlers.Global;
-using Hellbot.Service.EventBus.Handlers.Test;
 using Hellbot.Service.EventBus.Producers;
 using Scrutor;
+using Serilog;
+using Serilog.Events;
 
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Warning()
+    .MinimumLevel.Override("Hellbot", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: "bin/logs/log-.json",
+        formatter: new Serilog.Formatting.Json.JsonFormatter(),
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7,
+        shared: true,
+        flushToDiskInterval: TimeSpan.FromSeconds(1)
+    )
+    .CreateLogger();
+
+Log.Information($"Application Starting: {DateTime.Now}");
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
 
@@ -57,4 +73,15 @@ using (var scope = app.Services.CreateScope())
 
 app.Services.GetRequiredService<SignalREventBroadcaster>();
 
-app.Run();
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application crashed");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

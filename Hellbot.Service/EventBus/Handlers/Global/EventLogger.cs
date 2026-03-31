@@ -18,9 +18,11 @@ namespace Hellbot.Service.EventBus.Handlers.Global
 
         private Task Handle(IHellbotEvent evt)
         {
-            var json = System.Text.Json.JsonSerializer.Serialize(evt);
-
-            _logger.LogInformation($"[{evt.Timestamp}] {evt.GetType().Name}: {json}");
+            _logger.LogInformation(
+                "Event received: {EventType} {@Event}",
+                evt.GetType().Name,
+                evt
+            );
 
             return Task.CompletedTask;
         }
