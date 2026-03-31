@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers
 {
-    [Route("api/events")]
+    [Route("api/events/test")]
     [ApiController]
     public class TestEventController : ControllerBase
     {
@@ -15,7 +15,7 @@ namespace Hellbot.Service.Controllers
             _bus = bus;
         }
 
-        [HttpGet("test")]
+        [HttpGet]
         public async Task<IActionResult> PingTest()
         {
 
@@ -23,7 +23,7 @@ namespace Hellbot.Service.Controllers
             return Ok();
         }
 
-        [HttpPost("test")]
+        [HttpPost]
         public async Task<IActionResult> PostTest(TestMessageEvent evt)
         {
             await _bus.PublishAsync(evt);

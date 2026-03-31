@@ -1,5 +1,6 @@
 ﻿@page "/events"
 @using Microsoft.AspNetCore.SignalR.Client
+@using System.Text.Json;
 @rendermode InteractiveServer
 
 <h3>Live Events</h3>
@@ -8,7 +9,8 @@
     @foreach (var evt in events)
     {
         <li>
-            <b>@evt.Type</b> - @evt.Timestamp
+            <b style="color:@GetColor(evt.Type)">@evt.Type</b> - @evt.Timestamp
+            <pre>@JsonSerializer.Serialize(value: evt.Data, options: new() { WriteIndented = true })</pre>
         </li>
     }
 </ul>
@@ -37,6 +39,17 @@
         });
 
         await hubConnection.StartAsync();
+    }
+
+    private string GetColor(string eventType)
+    {
+        switch (eventType)
+        {
+            case "Test":
+                return "yellow";
+            default:
+                return "black";
+        }
     }
 
     public class EventViewModel
