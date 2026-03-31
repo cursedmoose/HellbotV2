@@ -39,7 +39,6 @@ builder.Services.Scan(scan => scan
 builder.Services.AddHostedService<HeartbeatProducer>();
 
 builder.Services.AddSignalR();
-builder.Services.AddSingleton<SignalREventBroadcaster>();
 builder.Services.AddControllers();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -70,8 +69,6 @@ using (var scope = app.Services.CreateScope())
         handler.Register(scope.ServiceProvider.GetRequiredService<IEventBus>());
     }
 }
-
-app.Services.GetRequiredService<SignalREventBroadcaster>();
 
 try
 {
