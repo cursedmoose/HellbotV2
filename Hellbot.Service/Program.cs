@@ -1,10 +1,13 @@
 using Hellbot.Core.Events;
+using Hellbot.Service.Clients.Twitch;
+using Hellbot.Service.Config;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.EventBus.Producers;
 using Scrutor;
 using Serilog;
 using Serilog.Events;
+using TwitchLib.EventSub.Websockets.Extensions;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Warning()
@@ -24,8 +27,17 @@ Log.Logger = new LoggerConfiguration()
 Log.Information($"Application Starting: {DateTime.Now}");
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
+
+// Config
+builder.Services.AddOptions<TwitchOptions>()
+    .Bind(builder.Configuration.GetSection("Twitch"))
+    .Validate(o => !string.IsNullOrEmpty(o.API.ClientSecret), "ClientSecret required!")
+    .ValidateOnStart();
+
 // Add services to the container.
 builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
+builder.Services.AddTwitchLibEventSubWebsockets();
+builder.Services.AddSingleton<TwitchClient>();
 
 // Handlers
 builder.Services.Scan(scan => scan
@@ -37,6 +49,7 @@ builder.Services.Scan(scan => scan
 
 // Producers
 builder.Services.AddHostedService<HeartbeatProducer>();
+builder.Services.AddHostedService<TwitchEventSubProducer>();
 
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
