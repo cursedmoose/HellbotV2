@@ -3,15 +3,8 @@ using Hellbot.Core.Events.Test;
 
 namespace Hellbot.Service.EventBus.Producers
 {
-    public class HeartbeatProducer: BackgroundService
+    public class HeartbeatProducer(IEventBus bus) : BackgroundService
     {
-        private readonly IEventBus _bus;
-
-        public HeartbeatProducer(IEventBus bus)
-        {
-            _bus = bus;
-        }
-
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -22,7 +15,7 @@ namespace Hellbot.Service.EventBus.Producers
                     Message = "PING HEARTBEAT"
                 };
 
-                await _bus.Publish(evt);
+                await bus.Publish(evt);
 
                 await Task.Delay(60_000, stoppingToken);
             }

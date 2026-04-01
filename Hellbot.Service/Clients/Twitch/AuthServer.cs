@@ -2,14 +2,9 @@
 
 namespace Hellbot.Service.Clients.Twitch
 {
-    internal class Authorization
+    internal class Authorization(string code)
     {
-        public string Code { get; }
-
-        public Authorization(string code)
-        {
-            Code = code;
-        }
+        public string Code { get; } = code;
     }
     internal class AuthServer
     {
@@ -36,6 +31,8 @@ namespace Hellbot.Service.Clients.Twitch
                 var resp = ctx.Response;
 
                 using var writer = new StreamWriter(resp.OutputStream);
+#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
+#pragma warning disable CS8604 // Possible null reference argument.
                 if (req.QueryString.AllKeys.Any("code".Contains))
                 {
                     writer.WriteLine("Authorization started! Check your application!");
@@ -47,6 +44,8 @@ namespace Hellbot.Service.Clients.Twitch
                     writer.WriteLine("No code found in query string!");
                     writer.Flush();
                 }
+#pragma warning restore CS8604 // Possible null reference argument.
+#pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
             }
             return null;
         }

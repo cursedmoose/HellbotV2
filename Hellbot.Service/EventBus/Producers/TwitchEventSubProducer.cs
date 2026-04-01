@@ -60,7 +60,6 @@ namespace Hellbot.Service.EventBus.Producers
 
             if (!e.IsRequestedReconnect)
             {
-                var condition = new Dictionary<string, string> { { "broadcaster_user_id", _userId }, { "user_id", _userId } };
                 // Create and send EventSubscription
                 await _twitch.API.EventSub.CreateEventSubSubscriptionAsync(
                     type: "channel.chat.message",

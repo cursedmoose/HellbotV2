@@ -3,17 +3,9 @@ using Hellbot.Service.EventBus.Handlers.Global;
 
 namespace Hellbot.Service.EventBus
 {
-    public class HellbotEventBus : IEventBus
+    public class HellbotEventBus(ILogger<EventLogger> logger) : IEventBus
     {
-        private readonly ILogger<EventLogger> _logger;
-
-        public HellbotEventBus(ILogger<EventLogger> logger)
-        {
-            _logger = logger;
-            _logger.LogInformation($"EventBus created: {GetHashCode()}");
-        }
-        private readonly Dictionary<Type, List<Func<IHellbotEvent, Task>>> _handlers = new();
-        private readonly List<Func<IHellbotEvent, Task>> _globalHandlers = new();
+        private readonly Dictionary<Type, List<Func<IHellbotEvent, Task>>> _handlers = [];
 
         public async Task Publish(IHellbotEvent evt)
         {
@@ -39,11 +31,7 @@ namespace Hellbot.Service.EventBus
                 _handlers[type] = [];
 
             _handlers[type].Add(evt => handler((T)evt));
-        }
-
-        public void SubscribeAll(Func<IHellbotEvent, Task> handler)
-        {
-            _globalHandlers.Add(handler);
+            logger.LogInformation("Subscribed {Handler} to {Event}", handler.Method.DeclaringType?.Name, type.Name);
         }
     }
 }

@@ -6,6 +6,7 @@ using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.EventBus.Producers;
 using Scrutor;
 using Serilog;
+using Serilog.Enrichers.ShortTypeName;
 using Serilog.Events;
 using TwitchLib.EventSub.Websockets.Extensions;
 
@@ -13,7 +14,10 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Warning()
     .MinimumLevel.Override("Hellbot", LogEventLevel.Information)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
+    .Enrich.WithShortTypeName()
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3} {ShortTypeName}] {Message:lj}{NewLine}{Exception}"
+    )
     .WriteTo.File(
         path: "bin/logs/log-.json",
         formatter: new Serilog.Formatting.Json.JsonFormatter(),

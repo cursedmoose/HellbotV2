@@ -3,14 +3,8 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Hellbot.Service.EventBus.Handlers.Global
 {
-    public class SignalREventBroadcaster: IEventHandler
+    public class SignalREventBroadcaster(IHubContext<EventHub> hubContext) : IEventHandler
     {
-        IHubContext<EventHub> _hubContext;
-        public SignalREventBroadcaster(IHubContext<EventHub> hubContext)
-        {
-            _hubContext = hubContext;
-        }
-
         public void Register(IEventBus bus)
         {
             bus.Subscribe<IHellbotEvent>(Broadcast);
@@ -18,7 +12,7 @@ namespace Hellbot.Service.EventBus.Handlers.Global
 
         private Task Broadcast(IHellbotEvent evt)
         {
-            return _hubContext.Clients.All.SendAsync("ReceiveEvent", new
+            return hubContext.Clients.All.SendAsync("ReceiveEvent", new
             {
                 type = evt.GetType().Name,
                 timestamp = evt.Timestamp,

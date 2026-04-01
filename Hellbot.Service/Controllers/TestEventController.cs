@@ -6,27 +6,20 @@ namespace Hellbot.Service.Controllers
 {
     [Route("api/events/test")]
     [ApiController]
-    public class TestEventController : ControllerBase
+    public class TestEventController(IEventBus bus) : ControllerBase
     {
-        private readonly IEventBus _bus;
-
-        public TestEventController(IEventBus bus)
-        {
-            _bus = bus;
-        }
-
         [HttpGet]
         public async Task<IActionResult> PingTest()
         {
 
-            await _bus.Publish(new TestMessageEvent() { Message = "ok" });
+            await bus.Publish(new TestMessageEvent() { Message = "ok" });
             return Ok();
         }
 
         [HttpPost]
         public async Task<IActionResult> PostTest(TestMessageEvent evt)
         {
-            await _bus.Publish(evt);
+            await bus.Publish(evt);
             return Ok();
         }
     }
