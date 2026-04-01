@@ -1,4 +1,5 @@
 ﻿using Hellbot.Core.Events;
+using Hellbot.Core.Events.Chat;
 using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
@@ -112,7 +113,13 @@ namespace Hellbot.Service.EventBus.Producers
 
         private async Task OnChannelChatMessage(object? sender, ChannelChatMessageArgs e)
         {
-            _logger.LogInformation($"@{e.Payload.Event.ChatterUserName} #{e.Payload.Event.BroadcasterUserName}: {e.Payload.Event.Message.Text}");
+            var twitchMessageEvent = new ChatReceivedEvent(
+                eventSource: "Twitch",
+                message: e.Payload.Event.Message.Text,
+                user: e.Payload.Event.ChatterUserName
+            );
+
+            await _bus.Publish(twitchMessageEvent);
         }
     }
 }
