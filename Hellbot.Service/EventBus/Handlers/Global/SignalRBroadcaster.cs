@@ -13,7 +13,7 @@ namespace Hellbot.Service.EventBus.Handlers.Global
 
         public void Register(IEventBus bus)
         {
-            bus.SubscribeAll(evt => Broadcast(evt));
+            bus.Subscribe<IHellbotEvent>(Broadcast);
         }
 
         private Task Broadcast(IHellbotEvent evt)

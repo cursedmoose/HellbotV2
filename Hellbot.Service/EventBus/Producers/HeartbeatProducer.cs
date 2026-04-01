@@ -22,7 +22,7 @@ namespace Hellbot.Service.EventBus.Producers
                     Message = "PING HEARTBEAT"
                 };
 
-                await _bus.PublishAsync(evt);
+                await _bus.Publish(evt);
 
                 await Task.Delay(60_000, stoppingToken);
             }

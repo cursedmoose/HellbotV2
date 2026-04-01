@@ -14,21 +14,21 @@ namespace Hellbot.Service.EventBus
         }
         private readonly Dictionary<Type, List<Func<IHellbotEvent, Task>>> _handlers = new();
         private readonly List<Func<IHellbotEvent, Task>> _globalHandlers = new();
-        public async Task PublishAsync<T>(T evt) where T : IHellbotEvent
+
+        public async Task Publish(IHellbotEvent evt)
         {
-            var type = typeof(T);
+            var eventType = evt.GetType();
 
-            var tasks = new List<Task>();
-
-            if (_handlers.TryGetValue(type, out var handlers))
+            foreach (var (registeredType, handlers) in _handlers)
             {
-                tasks.AddRange(handlers.Select(h => h(evt)));
+                if (registeredType.IsAssignableFrom(eventType))
+                {
+                    foreach (var handler in handlers)
+                    {
+                        await handler(evt);
+                    }
+                }
             }
-
-            // Global handlers
-            tasks.AddRange(_globalHandlers.Select(h => h(evt)));
-
-            await Task.WhenAll(tasks);
         }
 
         public void Subscribe<T>(Func<T, Task> handler) where T : IHellbotEvent

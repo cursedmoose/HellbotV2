@@ -12,7 +12,7 @@ namespace Hellbot.Service.EventBus.Handlers.Global
 
         public void Register(IEventBus bus)
         {
-            bus.SubscribeAll(Handle);
+            bus.Subscribe<IHellbotEvent>(Handle);
             _logger.LogInformation($"Logger initialized onto bus.");
         }
 

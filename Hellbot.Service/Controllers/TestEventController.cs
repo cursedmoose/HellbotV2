@@ -19,14 +19,14 @@ namespace Hellbot.Service.Controllers
         public async Task<IActionResult> PingTest()
         {
 
-            await _bus.PublishAsync(new TestMessageEvent() { Message = "ok" });
+            await _bus.Publish(new TestMessageEvent() { Message = "ok" });
             return Ok();
         }
 
         [HttpPost]
         public async Task<IActionResult> PostTest(TestMessageEvent evt)
         {
-            await _bus.PublishAsync(evt);
+            await _bus.Publish(evt);
             return Ok();
         }
     }
