@@ -4,6 +4,7 @@ using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
 using TwitchLib.Api.Core.Enums;
+using TwitchLib.Api.Helix.Models.EventSub;
 using TwitchLib.EventSub.Core.EventArgs.Channel;
 using TwitchLib.EventSub.Websockets;
 using TwitchLib.EventSub.Websockets.Core.EventArgs;
@@ -60,32 +61,21 @@ namespace Hellbot.Service.EventBus.Producers
 
             if (!e.IsRequestedReconnect)
             {
-                // Create and send EventSubscription
-                await _twitch.API.EventSub.CreateEventSubSubscriptionAsync(
-                    type: "channel.chat.message",
-                    version: "1",
-                    condition: new Dictionary<string, string> { 
-                        { "broadcaster_user_id", _userId }, 
-                        { "user_id", _userId } 
-                    },
-                    EventSubTransportMethod.Websocket,
-                    _eventSubWebsocketClient.SessionId
-                );
-                // If you want to get Events for special Events you need to additionally add the AccessToken of the ChannelOwner to the request.
                 // https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/
+                await SubscribeTo("channel.chat.message", "1", ["broadcaster_user_id", "user_id"]);
+                await SubscribeTo("channel.follow", "2", ["broadcaster_user_id", "moderator_user_id"]);
+            }
+        }
 
-                await _twitch.API.EventSub.CreateEventSubSubscriptionAsync(
-                    type: "channel.follow",
-                    version: "2",
-                    condition: new Dictionary<string, string>
-                    {
-                        { "broadcaster_user_id", _userId },
-                        { "moderator_user_id", _userId },
-                    },
+        private Task<CreateEventSubSubscriptionResponse> SubscribeTo(string type, string version, List<string> conditions)
+        {
+            return _twitch.API.EventSub.CreateEventSubSubscriptionAsync(
+                    type: type,
+                    version: version,
+                    condition: conditions.ToDictionary(x => x, x => _userId),
                     method: EventSubTransportMethod.Websocket,
                     websocketSessionId: _eventSubWebsocketClient.SessionId
                 );
-            }
         }
 
         private async Task OnWebsocketDisconnected(object? sender, WebsocketDisconnectedArgs e)
