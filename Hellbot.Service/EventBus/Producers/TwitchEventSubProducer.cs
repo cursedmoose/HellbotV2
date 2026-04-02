@@ -21,6 +21,11 @@ namespace Hellbot.Service.EventBus.Producers
         private readonly TwitchClient _twitch;
         private readonly string _userId;
 
+        private const string BROADCASTER_ID = "broadcaster_user_id";
+        private const string MODERATOR_ID = "moderator_user_id";
+        private const string USER_ID = "user_id";
+
+
         public TwitchEventSubProducer(
             IEventBus bus,
             ILogger<TwitchEventSubProducer> logger,
@@ -62,8 +67,15 @@ namespace Hellbot.Service.EventBus.Producers
             if (!e.IsRequestedReconnect)
             {
                 // https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/
-                await SubscribeTo("channel.chat.message", "1", ["broadcaster_user_id", "user_id"]);
-                await SubscribeTo("channel.follow", "2", ["broadcaster_user_id", "moderator_user_id"]);
+                await SubscribeTo("channel.chat.message", "1", [BROADCASTER_ID, USER_ID]);
+                await SubscribeTo("channel.follow", "2", [BROADCASTER_ID, MODERATOR_ID]);
+                await SubscribeTo("channel.poll.begin", "1", [BROADCASTER_ID]);
+                await SubscribeTo("channel.poll.end", "1", [BROADCASTER_ID]);
+                await SubscribeTo("channel.prediction.begin", "1", [BROADCASTER_ID]);
+                await SubscribeTo("channel.prediction.progress", "1", [BROADCASTER_ID]);
+                await SubscribeTo("channel.prediction.lock", "1", [BROADCASTER_ID]);
+                await SubscribeTo("channel.prediction.end", "1", [BROADCASTER_ID]);
+                await SubscribeTo("channel.update", "2", [BROADCASTER_ID]);
             }
         }
 
