@@ -1,6 +1,7 @@
 using Hellbot.Core.Events;
 using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
+using Hellbot.Service.Data;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.EventBus.Producers;
@@ -38,7 +39,13 @@ builder.Services.AddOptions<TwitchOptions>()
     .Validate(o => !string.IsNullOrEmpty(o.API.ClientSecret), "ClientSecret required!")
     .ValidateOnStart();
 
-// Add services to the container.
+// Database
+builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database"));
+builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
+builder.Services.AddScoped<EventTable>();
+builder.Services.AddSingleton<DbInitializer>();
+
+// Event Bus
 builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
 builder.Services.AddTwitchLibEventSubWebsockets();
 builder.Services.AddSingleton<TwitchClient>();
@@ -49,7 +56,7 @@ builder.Services.Scan(scan => scan
     .AddClasses(classes => classes.AssignableTo<IEventHandler>())
     .UsingRegistrationStrategy(RegistrationStrategy.Append)
     .AsImplementedInterfaces()
-    .WithSingletonLifetime());
+    .WithScopedLifetime());
 
 // Producers
 builder.Services.AddHostedService<HeartbeatProducer>();
@@ -80,6 +87,9 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
+    var dbInit = scope.ServiceProvider.GetRequiredService<DbInitializer>();
+    await dbInit.InitializeAsync();
+
     var handlers = scope.ServiceProvider.GetServices<IEventHandler>().ToList();
     foreach (var handler in handlers)
     {
