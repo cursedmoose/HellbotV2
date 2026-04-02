@@ -57,7 +57,7 @@ namespace Hellbot.Service.EventBus.Producers
 
         private async Task OnWebsocketConnected(object? sender, WebsocketConnectedArgs e)
         {
-            _logger.LogInformation($"Websocket {_eventSubWebsocketClient.SessionId} connected!");
+            _logger.LogInformation("Websocket {SessionId} connected!", _eventSubWebsocketClient.SessionId);
 
             if (!e.IsRequestedReconnect)
             {
@@ -80,9 +80,8 @@ namespace Hellbot.Service.EventBus.Producers
 
         private async Task OnWebsocketDisconnected(object? sender, WebsocketDisconnectedArgs e)
         {
-            _logger.LogError($"Websocket {_eventSubWebsocketClient.SessionId} disconnected!");
+            _logger.LogError("Websocket {SessionId} disconnected!", _eventSubWebsocketClient.SessionId);
 
-            // Don't do this in production. You should implement a better reconnect strategy with exponential backoff
             while (!await _eventSubWebsocketClient.ReconnectAsync())
             {
                 _logger.LogError("Websocket reconnect failed!");
@@ -92,18 +91,18 @@ namespace Hellbot.Service.EventBus.Producers
 
         private async Task OnWebsocketReconnected(object? sender, WebsocketReconnectedArgs e)
         {
-            _logger.LogWarning($"Websocket {_eventSubWebsocketClient.SessionId} reconnected");
+            _logger.LogWarning("Websocket {SessionId} reconnected", _eventSubWebsocketClient.SessionId);
         }
 
         private async Task OnErrorOccurred(object? sender, ErrorOccuredArgs e)
         {
-            _logger.LogError($"Websocket {_eventSubWebsocketClient.SessionId} - Error occurred!");
+            _logger.LogError("Websocket {SessionId} - Error occurred!", _eventSubWebsocketClient.SessionId);
         }
 
         private async Task OnChannelChatMessage(object? sender, ChannelChatMessageArgs e)
         {
             var twitchMessageEvent = new ChatReceivedEvent(
-                eventSource: "Twitch",
+                eventSource: EventSource.Twitch,
                 message: e.Payload.Event.Message.Text,
                 user: e.Payload.Event.ChatterUserName
             );

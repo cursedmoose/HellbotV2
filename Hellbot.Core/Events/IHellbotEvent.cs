@@ -3,6 +3,6 @@
     public interface IHellbotEvent
     {
         DateTime Timestamp { get; init; }
-        string EventSource { get; init; }
+        EventSource Source { get; init; }
     }
 }

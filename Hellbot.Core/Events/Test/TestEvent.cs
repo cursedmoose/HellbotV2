@@ -3,6 +3,6 @@
     public abstract class TestEvent : IHellbotEvent
     {
         public DateTime Timestamp { get; init; } = DateTime.Now;
-        public string EventSource { get; init; } = "HellbotTest";
+        public EventSource Source { get; init; } = EventSource.Test;
     }
 }
