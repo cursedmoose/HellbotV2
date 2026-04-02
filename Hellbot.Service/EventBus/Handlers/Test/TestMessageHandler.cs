@@ -12,7 +12,7 @@ namespace Hellbot.Service.EventBus.Handlers.Test
 
         private Task Handle(TestMessageEvent evt)
         {
-            logger.LogInformation($"Handled Test Message: {evt.Message}");
+            logger.LogInformation("Handled Test Message: {Message}", evt.Message);
             return Task.CompletedTask;
         }
     }
