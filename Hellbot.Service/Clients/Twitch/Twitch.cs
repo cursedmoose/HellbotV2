@@ -35,6 +35,7 @@ namespace Hellbot.Service.Clients.Twitch
                 "channel:manage:redemptions",
                 "channel:manage:broadcast",
                 "channel:read:ads",
+                "channel:read:subscriptions",
                 "channel:edit:commercial",
                 "clips:edit"
             };

@@ -68,26 +68,44 @@ namespace Hellbot.Service.EventBus.Producers
             {
                 // https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/
                 await SubscribeTo("channel.chat.message", "1", [BROADCASTER_ID, USER_ID]);
+
+                await SubscribeTo("channel.subscribe", "1", [BROADCASTER_ID]);
+                await SubscribeTo("channel.subscription.gift", "1", [BROADCASTER_ID]);
                 await SubscribeTo("channel.follow", "2", [BROADCASTER_ID, MODERATOR_ID]);
+
                 await SubscribeTo("channel.poll.begin", "1", [BROADCASTER_ID]);
+                await SubscribeTo("channel.poll.progress", "1", [BROADCASTER_ID]);
                 await SubscribeTo("channel.poll.end", "1", [BROADCASTER_ID]);
+
                 await SubscribeTo("channel.prediction.begin", "1", [BROADCASTER_ID]);
                 await SubscribeTo("channel.prediction.progress", "1", [BROADCASTER_ID]);
                 await SubscribeTo("channel.prediction.lock", "1", [BROADCASTER_ID]);
                 await SubscribeTo("channel.prediction.end", "1", [BROADCASTER_ID]);
+
                 await SubscribeTo("channel.update", "2", [BROADCASTER_ID]);
+
+                await SubscribeTo("stream.online", "1", [BROADCASTER_ID]);
+                await SubscribeTo("stream.offline", "1", [BROADCASTER_ID]);
             }
         }
 
-        private Task<CreateEventSubSubscriptionResponse> SubscribeTo(string type, string version, List<string> conditions)
+        private async Task<CreateEventSubSubscriptionResponse> SubscribeTo(string type, string version, List<string> conditions)
         {
-            return _twitch.API.EventSub.CreateEventSubSubscriptionAsync(
-                    type: type,
-                    version: version,
-                    condition: conditions.ToDictionary(x => x, x => _userId),
-                    method: EventSubTransportMethod.Websocket,
-                    websocketSessionId: _eventSubWebsocketClient.SessionId
-                );
+            try
+            {
+                return await _twitch.API.EventSub.CreateEventSubSubscriptionAsync(
+                        type: type,
+                        version: version,
+                        condition: conditions.ToDictionary(x => x, x => _userId),
+                        method: EventSubTransportMethod.Websocket,
+                        websocketSessionId: _eventSubWebsocketClient.SessionId
+                    );
+            }
+            catch (TwitchLib.Api.Core.Exceptions.BadTokenException e)
+            {
+                _logger.LogWarning("Missing scope for {SubscriptionType}", type);
+                return new();
+            }
         }
 
         private async Task OnWebsocketDisconnected(object? sender, WebsocketDisconnectedArgs e)
