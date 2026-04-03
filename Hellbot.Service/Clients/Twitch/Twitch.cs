@@ -12,6 +12,7 @@ namespace Hellbot.Service.Clients.Twitch
         private readonly ILogger<TwitchClient> _logger;
         private readonly TwitchOptions _options;
         private readonly TwitchAPI _api = new();
+        private readonly List<string> _scopes;
         public Helix API { get { return _api.Helix; } }
         public Auth Auth { get { return _api.Auth; } }
 
@@ -21,7 +22,7 @@ namespace Hellbot.Service.Clients.Twitch
             _options = options.Value;
 
             _api.Settings.ClientId = _options.API.ClientId;
-            var scopes = new List<string>()
+            _scopes = new List<string>()
             {
                 "user:read:chat",
                 "user:write:chat",
@@ -38,7 +39,7 @@ namespace Hellbot.Service.Clients.Twitch
                 "clips:edit"
             };
 
-            StartApi(scopes).GetAwaiter().GetResult();
+            StartApi(_scopes).GetAwaiter().GetResult();
         }
 
         private async Task StartApi(List<string> scopes)

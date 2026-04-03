@@ -108,7 +108,7 @@ namespace Hellbot.Service.EventBus.Producers
 
         private async Task OnErrorOccurred(object? sender, ErrorOccuredArgs e)
         {
-            _logger.LogError("Websocket {SessionId} - Error occurred!", _eventSubWebsocketClient.SessionId);
+            _logger.LogError("Websocket {SessionId} - Error occurred! {Error}:{Message}", _eventSubWebsocketClient.SessionId, e.Exception, e.Message);
         }
 
         private async Task OnChannelChatMessage(object? sender, ChannelChatMessageArgs e)
