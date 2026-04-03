@@ -1,5 +1,6 @@
 ﻿using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
+using Hellbot.Core.Events.Session;
 using Hellbot.Core.Events.Test;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,7 +29,22 @@ namespace Hellbot.Service.Controllers
         public async Task<IActionResult> ChatMessage(ChatReceivedPayload evt)
         {
             var real_evt = new ChatReceivedEvent { Source = EventSource.API, Data = evt };
-            // var real_evt = new ChatReceivedEvent("test", EventSource.API, evt.Message, evt.User); 
+            await bus.Publish(real_evt);
+            return Ok();
+        }
+
+        [HttpPost("start")]
+        public async Task<IActionResult> StartStream(StreamStartPayload evt)
+        {
+            var real_evt = new StreamStartEvent { Source = EventSource.API, Data = evt };
+            await bus.Publish(real_evt);
+            return Ok();
+        }
+
+        [HttpPost("stop")]
+        public async Task<IActionResult> StopStream(StreamStopPayload evt)
+        {
+            var real_evt = new StreamStopEvent { Source = EventSource.API, Data = evt };
             await bus.Publish(real_evt);
             return Ok();
         }

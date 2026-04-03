@@ -1,4 +1,5 @@
 using Hellbot.Core.Events;
+using Hellbot.Core.Sessions;
 using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
 using Hellbot.Service.Data;
@@ -49,6 +50,7 @@ builder.Services.AddSingleton<DbInitializer>();
 builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
 builder.Services.AddTwitchLibEventSubWebsockets();
 builder.Services.AddSingleton<TwitchClient>();
+builder.Services.AddSingleton<IStreamSessionManager, StreamSessionManager>();
 
 // Handlers
 builder.Services.Scan(scan => scan

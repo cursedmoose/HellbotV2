@@ -6,5 +6,6 @@
         public DateTimeOffset Timestamp { get; init; } = DateTimeOffset.UtcNow;
         public required EventSource Source { get; init; }
         public required TPayload Data { get; init; }
+        public Guid? StreamId { get; set; } = null;
     }
 }
