@@ -7,12 +7,12 @@ namespace Hellbot.Service.EventBus.Handlers.Test
     {
         public void Register(IEventBus bus)
         {
-            bus.Subscribe<TestMessageEvent>(Handle);
+            bus.Subscribe<TestEvent>(Handle);
         }
 
-        private Task Handle(TestMessageEvent evt)
+        private Task Handle(TestEvent evt)
         {
-            logger.LogInformation("Handled Test Message: {Message}", evt.Message);
+            logger.LogInformation("Handled Test Message: {Message}", evt.Data.Message);
             return Task.CompletedTask;
         }
     }

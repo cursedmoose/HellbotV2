@@ -18,9 +18,9 @@ namespace Hellbot.Service.Data
         {
             using var connection = factory.CreateConnection();
 
-            string? metadataJson = evt.Metadata != null
-                ? JsonSerializer.Serialize(evt.Metadata, _jsonOptions)
-                : null;
+            var eventType = evt.GetType();
+
+            var eventJson = JsonSerializer.Serialize(evt, eventType, _jsonOptions);
 
             await connection.ExecuteAsync(@"
             INSERT INTO events (id, timestamp, platform, event_type, metadata)
@@ -30,8 +30,8 @@ namespace Hellbot.Service.Data
                 Id = evt.Id,
                 Timestamp = evt.Timestamp,
                 Platform = PlatformSource.GetName(evt.Source.Platform),
-                EventType = evt.GetType().Name,
-                Metadata = JsonSerializer.Serialize(evt.Metadata)
+                EventType = eventType.Name,
+                Metadata = eventJson
             });
         }
     }

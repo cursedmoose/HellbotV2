@@ -10,10 +10,7 @@ namespace Hellbot.Service.EventBus.Producers
             while (!stoppingToken.IsCancellationRequested)
             {
                 // fake message
-                var evt = new TestMessageEvent
-                {
-                    Message = "PING HEARTBEAT"
-                };
+                var evt = new TestEvent() { Source = EventSource.Test, Data = new() { Message = "OK" } };
 
                 await bus.Publish(evt);
 
