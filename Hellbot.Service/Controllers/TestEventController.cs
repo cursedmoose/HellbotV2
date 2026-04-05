@@ -19,9 +19,9 @@ namespace Hellbot.Service.Controllers
         }
 
         [HttpPost("test")]
-        public async Task<IActionResult> Test(TestEvent evt)
+        public async Task<IActionResult> Test(TestPayload evt)
         {
-            await bus.Publish(evt);
+            await bus.Publish(new TestEvent { Source = EventSource.API, Data = evt });
             return Ok();
         }
 
@@ -33,7 +33,7 @@ namespace Hellbot.Service.Controllers
             return Ok();
         }
 
-        [HttpPost("start")]
+        [HttpPost("stream/start")]
         public async Task<IActionResult> StartStream(StreamStartPayload evt)
         {
             var real_evt = new StreamStartEvent { Source = EventSource.API, Data = evt };
@@ -41,7 +41,7 @@ namespace Hellbot.Service.Controllers
             return Ok();
         }
 
-        [HttpPost("stop")]
+        [HttpPost("stream/stop")]
         public async Task<IActionResult> StopStream(StreamStopPayload evt)
         {
             var real_evt = new StreamStopEvent { Source = EventSource.API, Data = evt };
