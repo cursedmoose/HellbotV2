@@ -14,5 +14,13 @@ namespace Hellbot.Service.Controllers
                 Data = evt,
                 Source = EventSource.API
             });
+
+        [HttpPost("tts")]
+        public Task<IActionResult> TtsMessage(TtsRequestPayload evt)
+            => Publish(new TtsRequestEvent
+            {
+                Data = evt,
+                Source = EventSource.API
+            });
     }
 }
