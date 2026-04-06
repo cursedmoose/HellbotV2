@@ -1,11 +1,13 @@
 using Hellbot.Core.Events;
 using Hellbot.Core.Sessions;
+using Hellbot.Service.Clients.OBS;
 using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
 using Hellbot.Service.Data;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.EventBus.Producers;
+using OBSWebsocketDotNet;
 using Scrutor;
 using Serilog;
 using Serilog.Enrichers.ShortTypeName;
@@ -39,6 +41,8 @@ builder.Services.AddOptions<TwitchOptions>()
     .Bind(builder.Configuration.GetSection("Twitch"))
     .Validate(o => !string.IsNullOrEmpty(o.API.ClientSecret), "ClientSecret required!")
     .ValidateOnStart();
+builder.Services.AddOptions<ObsOptions>()
+    .Bind(builder.Configuration.GetSection("OBS"));
 
 // Database
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database"));
@@ -50,6 +54,8 @@ builder.Services.AddSingleton<DbInitializer>();
 builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
 builder.Services.AddTwitchLibEventSubWebsockets();
 builder.Services.AddSingleton<TwitchClient>();
+builder.Services.AddSingleton<OBSWebsocket>();
+builder.Services.AddSingleton<ObsClient>();
 builder.Services.AddSingleton<IStreamSessionManager, StreamSessionManager>();
 
 // Handlers
@@ -63,6 +69,7 @@ builder.Services.Scan(scan => scan
 // Producers
 builder.Services.AddHostedService<HeartbeatProducer>();
 builder.Services.AddHostedService<TwitchEventSubProducer>();
+builder.Services.AddHostedService<ObsEventProducer>();
 
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
