@@ -7,6 +7,7 @@ using Hellbot.Service.Config;
 using Hellbot.Service.Data;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
+using Hellbot.Service.EventBus.Middleware;
 using Hellbot.Service.EventBus.Producers;
 using Hellbot.Service.Tts;
 using OBSWebsocketDotNet;
@@ -14,6 +15,7 @@ using Scrutor;
 using Serilog;
 using Serilog.Enrichers.ShortTypeName;
 using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 using TwitchLib.EventSub.Websockets.Extensions;
 
 Log.Logger = new LoggerConfiguration()
@@ -22,7 +24,8 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .Enrich.WithShortTypeName()
     .WriteTo.Console(
-        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3} {ShortTypeName}] {Message:lj}{NewLine}{Exception}"
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3} {ShortTypeName}] {Message:lj}{NewLine}{Exception}",
+        theme: AnsiConsoleTheme.Code
     )
     .WriteTo.File(
         path: "bin/logs/log-.json",
@@ -77,6 +80,10 @@ builder.Services.Scan(scan => scan
     .AsImplementedInterfaces()
     .WithScopedLifetime());
 
+// Middleware (order matters, but not really)
+builder.Services.AddSingleton<IEventMiddleware, EventLogger>();
+builder.Services.AddSingleton<IEventMiddleware, StreamSessionContextEnricher>();
+
 // Producers
 builder.Services.AddHostedService<HeartbeatProducer>();
 builder.Services.AddHostedService<TtsWorker>();
@@ -108,13 +115,14 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
+    var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
     var dbInit = scope.ServiceProvider.GetRequiredService<DbInitializer>();
     await dbInit.InitializeAsync();
 
     var handlers = scope.ServiceProvider.GetServices<IEventHandler>().ToList();
     foreach (var handler in handlers)
     {
-        handler.Register(scope.ServiceProvider.GetRequiredService<IEventBus>());
+        handler.Register(eventBus);
     }
 }
 

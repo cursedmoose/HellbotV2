@@ -3,13 +3,17 @@ using Hellbot.Service.EventBus.Handlers.Global;
 
 namespace Hellbot.Service.EventBus
 {
-    public class HellbotEventBus(ILogger<EventLogger> logger) : IEventBus
+    public class HellbotEventBus(IEnumerable<IEventMiddleware> middlewares, ILogger<HellbotEventBus> logger) : IEventBus
     {
         private readonly Dictionary<Type, List<Func<IHellbotEvent, Task>>> _handlers = [];
-
         public async Task Publish(IHellbotEvent evt)
         {
             var eventType = evt.GetType();
+
+            foreach (var middleware in middlewares)
+            {
+                await middleware.Invoke(evt);
+            }
 
             foreach (var (registeredType, handlers) in _handlers)
             {

@@ -103,7 +103,7 @@ namespace Hellbot.Service.EventBus.Producers
             }
             catch (TwitchLib.Api.Core.Exceptions.BadTokenException e)
             {
-                _logger.LogWarning("Missing scope for {SubscriptionType}", type);
+                _logger.LogWarning("{Exception}: Probably Missing scope for {SubscriptionType}", e.InnerException, type);
                 return new();
             }
         }
