@@ -1,3 +1,4 @@
+using FluentMigrator.Runner;
 using Hellbot.Core.Events;
 using Hellbot.Core.Sessions;
 using Hellbot.Service.Clients.ElevenLabs;
@@ -5,6 +6,8 @@ using Hellbot.Service.Clients.OBS;
 using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
 using Hellbot.Service.Data;
+using Hellbot.Service.Data.Migrations;
+using Hellbot.Service.Data.Tables;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.EventBus.Middleware;
@@ -16,6 +19,7 @@ using Serilog;
 using Serilog.Enrichers.ShortTypeName;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using System.Data;
 using TwitchLib.EventSub.Websockets.Extensions;
 
 Log.Logger = new LoggerConfiguration()
@@ -57,7 +61,19 @@ builder.Services.AddOptions<ElevenLabsOptions>()
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database"));
 builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 builder.Services.AddScoped<EventTable>();
-builder.Services.AddSingleton<DbInitializer>();
+builder.Services.AddScoped<VoiceProfilesTable>();
+
+
+builder.Services.AddFluentMigratorCore()
+    .ConfigureRunner(rb => {
+        var connectionString = builder.Configuration.GetSection("Database").GetRequiredSection("ConnectionString").Value;
+        rb.AddSQLite()
+        .WithGlobalConnectionString(connectionString)
+        .ScanIn(typeof(M001_CreateEventsTable).Assembly)
+        .For.Migrations();
+    });
+
+builder.Services.AddHostedService<Hellbot.Service.Data.MigrationRunner>();
 
 // Event Bus
 builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
@@ -116,8 +132,6 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
-    var dbInit = scope.ServiceProvider.GetRequiredService<DbInitializer>();
-    await dbInit.InitializeAsync();
 
     var handlers = scope.ServiceProvider.GetServices<IEventHandler>().ToList();
     foreach (var handler in handlers)

@@ -3,7 +3,7 @@ using Hellbot.Core.Events;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Hellbot.Service.Data
+namespace Hellbot.Service.Data.Tables
 {
     public class EventTable(IDbConnectionFactory factory)
     {
