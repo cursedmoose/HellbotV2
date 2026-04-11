@@ -4,7 +4,7 @@
     {
         public required string User { get; init; }
         public required string Message { get; init; }
-        public required string Channel { get; init; }
+        public required string MessageId { get; init; }
     }
 
     public record ChatMessageReceived : HellbotEvent<ChatReceivedPayload>;

@@ -1,5 +1,6 @@
 ﻿using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
+using Hellbot.Core.Events.Users;
 using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
@@ -48,6 +49,11 @@ namespace Hellbot.Service.EventBus.Producers
 
             // Message Hooks
             _eventSubWebsocketClient.ChannelChatMessage += OnChannelChatMessage;
+            _eventSubWebsocketClient.ChannelChatMessageDelete += OnChannelChatMessageDelete;
+
+            // Moderation Hooks
+            _eventSubWebsocketClient.ChannelBan += OnChannelBan;
+            _eventSubWebsocketClient.ChannelUnban += OnChannelUnban;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -131,13 +137,62 @@ namespace Hellbot.Service.EventBus.Producers
 
         private async Task OnChannelChatMessage(object? sender, ChannelChatMessageArgs e)
         {
-            var twitchMessageEvent = new ChatMessageReceived
+            var hellbotEvent = new ChatMessageReceived
             {
-                Data = new() { User = e.Payload.Event.ChatterUserId, Channel = "#cursedmoose", Message = e.Payload.Event.Message.Text },
+                Data = new() {
+                    User = e.Payload.Event.ChatterUserId,
+                    Message = e.Payload.Event.Message.Text,
+                    MessageId = e.Payload.Event.MessageId,
+                },
                 Source = EventSource.Twitch
             };
 
-            await _bus.Publish(twitchMessageEvent);
+            await _bus.Publish(hellbotEvent);
+        }
+
+        private async Task OnChannelChatMessageDelete(object? sender, ChannelChatMessageDeleteArgs e) 
+        {
+            var hellbotEvent = new ChatMessageDeleted
+            {
+                Data = new()
+                {
+                    MessageId = e.Payload.Event.MessageId
+                },
+                Source = EventSource.Twitch
+            };
+
+            await _bus.Publish(hellbotEvent);
+        }
+
+        private async Task OnChannelBan(object? sender, ChannelBanArgs e)
+        {
+            var hellbotEvent = new UserBanned
+            {
+                Data = new()
+                {
+                    UserId = e.Payload.Event.UserId,
+                    Reason = e.Payload.Event.Reason,
+                    IsPermanent = e.Payload.Event.IsPermanent,
+                    BannedAt = e.Payload.Event.BannedAt
+                },
+                Source = EventSource.Twitch,
+            };
+
+            await _bus.Publish(hellbotEvent);
+        }
+
+        private async Task OnChannelUnban(object? sender, ChannelUnbanArgs e)
+        {
+            var hellbotEvent = new UserUnbanned
+            {
+                Data = new()
+                {
+                    UserId = e.Payload.Event.UserId
+                },
+                Source = EventSource.Twitch,
+            };
+
+            await _bus.Publish(hellbotEvent);
         }
     }
 }

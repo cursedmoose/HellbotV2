@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Hellbot.Core.Events.Chat
+﻿namespace Hellbot.Core.Events.Chat
 {
 
     public record TtsRequestPayload
