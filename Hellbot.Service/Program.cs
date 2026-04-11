@@ -4,6 +4,7 @@ using Hellbot.Core.Sessions;
 using Hellbot.Service.Clients.ElevenLabs;
 using Hellbot.Service.Clients.OBS;
 using Hellbot.Service.Clients.Twitch;
+using Hellbot.Service.Commands;
 using Hellbot.Service.Config;
 using Hellbot.Service.Data;
 using Hellbot.Service.Data.Migrations;
@@ -19,6 +20,7 @@ using Serilog;
 using Serilog.Enrichers.ShortTypeName;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using System.Windows.Input;
 using TwitchLib.EventSub.Websockets.Extensions;
 
 Log.Logger = new LoggerConfiguration()
@@ -91,6 +93,13 @@ builder.Services.AddSingleton<ObsClient>();
 builder.Services.Scan(scan => scan
     .FromAssembliesOf(typeof(IEventHandler))
     .AddClasses(classes => classes.AssignableTo<IEventHandler>())
+    .UsingRegistrationStrategy(RegistrationStrategy.Append)
+    .AsImplementedInterfaces()
+    .WithScopedLifetime());
+
+builder.Services.Scan(scan => scan
+    .FromAssembliesOf(typeof(ICommandHandler))
+    .AddClasses(classes => classes.AssignableTo<ICommandHandler>())
     .UsingRegistrationStrategy(RegistrationStrategy.Append)
     .AsImplementedInterfaces()
     .WithScopedLifetime());

@@ -1,4 +1,5 @@
-﻿using Hellbot.Core.Events;
+﻿using Hellbot.Core.Commands;
+using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
 using Hellbot.Core.Events.Users;
 using Hellbot.Service.Clients.Twitch;
@@ -135,17 +136,73 @@ namespace Hellbot.Service.EventBus.Producers
             _logger.LogError("Websocket {SessionId} - Error occurred! {Error}:{Message}", _eventSubWebsocketClient.SessionId, e.Exception, e.Message);
         }
 
+        private static Role GetDefaultRole(ChannelChatMessageArgs e)
+        {
+            return e.Payload.Event switch
+            {
+                { IsBroadcaster: true } => Role.Admin,
+                { IsSubscriber: true } => Role.Premium,
+                { IsVip: true } => Role.Premium,
+                _ => Role.None
+            };
+        }
+
+        private static bool TryParseCommand(string message, out string command, out string[] args)
+        {
+            command = null!;
+            args = [];
+
+            if (string.IsNullOrWhiteSpace(message) || message[0] != '!')
+                return false;
+
+            var parts = message.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var cmd = parts[0][1..];
+
+            if (string.IsNullOrWhiteSpace(cmd) || !char.IsLetter(cmd[0]))
+                return false;
+
+            if (!cmd.All(char.IsLetterOrDigit))
+                return false;
+
+            command = cmd;
+            args = [..parts.Skip(1)];
+            return true;
+        }
+
         private async Task OnChannelChatMessage(object? sender, ChannelChatMessageArgs e)
         {
-            var hellbotEvent = new ChatMessageReceived
+            var message = e.Payload.Event.Message.Text;
+            IHellbotEvent hellbotEvent;
+            if (TryParseCommand(message, out string command, out string[] commandArgs))
             {
-                Data = new() {
-                    User = e.Payload.Event.ChatterUserId,
-                    Message = e.Payload.Event.Message.Text,
-                    MessageId = e.Payload.Event.MessageId,
-                },
-                Source = EventSource.Twitch
-            };
+                hellbotEvent = new CommandRequested
+                {
+                    Data = new()
+                    {
+                        Command = command,
+                        CommandArgs = commandArgs,
+                        CommandSource = EventSource.Twitch,
+                        User = e.Payload.Event.ChatterUserId,
+                        UserRole = GetDefaultRole(e)
+                    },
+                    Source = EventSource.Twitch
+                };
+            }
+            else
+            {
+
+                hellbotEvent = new ChatMessageReceived
+                {
+                    Data = new()
+                    {
+                        User = e.Payload.Event.ChatterUserId,
+                        Message = e.Payload.Event.Message.Text,
+                        MessageId = e.Payload.Event.MessageId,
+                    },
+                    Source = EventSource.Twitch
+                };
+            }
 
             await _bus.Publish(hellbotEvent);
         }

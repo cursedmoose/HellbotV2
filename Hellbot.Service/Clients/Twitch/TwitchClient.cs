@@ -22,8 +22,8 @@ namespace Hellbot.Service.Clients.Twitch
             _options = options.Value;
 
             _api.Settings.ClientId = _options.API.ClientId;
-            _scopes = new List<string>()
-            {
+            _scopes =
+            [
                 "user:read:chat",
                 "user:write:chat",
                 "moderator:read:chat_messages",
@@ -38,7 +38,7 @@ namespace Hellbot.Service.Clients.Twitch
                 "channel:read:subscriptions",
                 "channel:edit:commercial",
                 "clips:edit"
-            };
+            ];
 
             StartApi(_scopes).GetAwaiter().GetResult();
         }
@@ -47,13 +47,13 @@ namespace Hellbot.Service.Clients.Twitch
         {
             var server = new AuthServer(_options.API.RedirectUrl);
             var codeUrl = AuthServer.GetAuthorizationCodeUrl(_options.API.ClientId, _options.API.RedirectUrl, scopes);
-            _logger.LogInformation($"Please authorize here:\n{codeUrl}");
+            _logger.LogInformation("Please authorize here:\n{URL}", codeUrl);
             OpenBrowser(codeUrl);
             var auth = await server.Listen();
             var resp = await Auth.GetAccessTokenFromCodeAsync(auth?.Code, _options.API.ClientSecret, _options.API.RedirectUrl);
             _api.Settings.AccessToken = resp.AccessToken;
             var user = (await API.Users.GetUsersAsync()).Users[0];
-            _logger.LogInformation($"Authorization success!\n\nUser: {user.DisplayName}({user.Id})\nScopes: {string.Join(", ", resp.Scopes)}");
+            _logger.LogInformation("Authorization success!\n\nUser={UserName}({UserId})\nScopes=[{Scopes}]", user.DisplayName, user.Id, string.Join(", ", resp.Scopes));
         }
 
         private static void OpenBrowser(string url)
