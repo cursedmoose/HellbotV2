@@ -7,5 +7,5 @@
         public required string Channel { get; init; }
     }
 
-    public record ChatReceivedEvent : HellbotEvent<ChatReceivedPayload>;
+    public record ChatMessageReceived : HellbotEvent<ChatReceivedPayload>;
 }

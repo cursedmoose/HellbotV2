@@ -131,7 +131,7 @@ namespace Hellbot.Service.EventBus.Producers
 
         private async Task OnChannelChatMessage(object? sender, ChannelChatMessageArgs e)
         {
-            var twitchMessageEvent = new ChatReceivedEvent
+            var twitchMessageEvent = new ChatMessageReceived
             {
                 Data = new() { User = e.Payload.Event.ChatterUserId, Channel = "#cursedmoose", Message = e.Payload.Event.Message.Text },
                 Source = EventSource.Twitch

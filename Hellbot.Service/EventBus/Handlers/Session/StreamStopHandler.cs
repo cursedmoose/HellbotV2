@@ -8,10 +8,10 @@ namespace Hellbot.Service.EventBus.Handlers.Session
     {
         public void Register(IEventBus bus)
         {
-            bus.Subscribe<StreamStopEvent>(Handle);
+            bus.Subscribe<StreamStopped>(Handle);
         }
 
-        private Task Handle(StreamStopEvent evt)
+        private Task Handle(StreamStopped evt)
         {
             var stream = sessionManager.EndSession(evt.Timestamp);
             logger.LogInformation("Stream Session {SessionId} Stopped", stream?.Id);

@@ -5,13 +5,13 @@ namespace Hellbot.Service.Tts
 {
     public class TtsQueue : ITtsQueue
     {
-        private readonly Channel<TtsRequestEvent> _channel =
-            Channel.CreateUnbounded<TtsRequestEvent>();
+        private readonly Channel<TtsRequested> _channel =
+            Channel.CreateUnbounded<TtsRequested>();
 
-        public ValueTask EnqueueAsync(TtsRequestEvent evt)
+        public ValueTask EnqueueAsync(TtsRequested evt)
             => _channel.Writer.WriteAsync(evt);
 
-        public IAsyncEnumerable<TtsRequestEvent> DequeueAllAsync(CancellationToken ct)
+        public IAsyncEnumerable<TtsRequested> DequeueAllAsync(CancellationToken ct)
             => _channel.Reader.ReadAllAsync(ct);
 
         public int Length() => _channel.Reader.Count;

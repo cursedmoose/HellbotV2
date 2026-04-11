@@ -12,6 +12,6 @@ namespace Hellbot.Core.Events.Chat
         public int Priority { get; init; } = 0; 
     }
 
-    public record TtsRequestEvent : HellbotEvent<TtsRequestPayload>;
+    public record TtsRequested : HellbotEvent<TtsRequestPayload>;
 
 }

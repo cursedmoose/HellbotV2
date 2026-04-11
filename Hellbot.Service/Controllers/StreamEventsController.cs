@@ -10,10 +10,10 @@ namespace Hellbot.Service.Controllers
     {
         [HttpPost("start")]
         public Task<IActionResult> StartStream(StreamStartPayload evt)
-            => Publish(new StreamStartEvent { Source = EventSource.API, Data = evt });
+            => Publish(new StreamStarted { Source = EventSource.API, Data = evt });
 
         [HttpPost("stop")]
         public Task<IActionResult> StopStream(StreamStopPayload evt)
-            => Publish(new StreamStopEvent { Source = EventSource.API, Data = evt });
+            => Publish(new StreamStopped { Source = EventSource.API, Data = evt });
     }
 }

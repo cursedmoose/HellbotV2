@@ -9,7 +9,7 @@ namespace Hellbot.Service.Controllers
     {
         [HttpPost("chat")]
         public Task<IActionResult> ChatMessage(ChatReceivedPayload evt)
-            => Publish(new ChatReceivedEvent
+            => Publish(new ChatMessageReceived
             {
                 Data = evt,
                 Source = EventSource.API
@@ -17,7 +17,7 @@ namespace Hellbot.Service.Controllers
 
         [HttpPost("tts")]
         public Task<IActionResult> TtsMessage(TtsRequestPayload evt)
-            => Publish(new TtsRequestEvent
+            => Publish(new TtsRequested
             {
                 Data = evt,
                 Source = EventSource.API

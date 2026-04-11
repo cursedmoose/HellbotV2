@@ -1,5 +1,5 @@
 ﻿namespace Hellbot.Core.Events.Session
 {
     public record StreamStartPayload;
-    public record StreamStartEvent : HellbotEvent<StreamStartPayload>;
+    public record StreamStarted : HellbotEvent<StreamStartPayload>;
 }

@@ -4,8 +4,8 @@ namespace Hellbot.Service.Tts
 {
     public interface ITtsQueue
     {
-        ValueTask EnqueueAsync(TtsRequestEvent evt);
-        IAsyncEnumerable<TtsRequestEvent> DequeueAllAsync(CancellationToken ct);
+        ValueTask EnqueueAsync(TtsRequested evt);
+        IAsyncEnumerable<TtsRequested> DequeueAllAsync(CancellationToken ct);
         int Length();
     }
 }

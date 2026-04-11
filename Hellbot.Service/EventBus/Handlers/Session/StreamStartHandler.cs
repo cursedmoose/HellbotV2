@@ -8,10 +8,10 @@ namespace Hellbot.Service.EventBus.Handlers.Session
     {
         public void Register(IEventBus bus)
         {
-            bus.Subscribe<StreamStartEvent>(Handle);
+            bus.Subscribe<StreamStarted>(Handle);
         }
 
-        private Task Handle(StreamStartEvent evt)
+        private Task Handle(StreamStarted evt)
         {
             var stream = sessionManager.StartSession(evt.Timestamp);
             logger.LogInformation("Stream Session {SessionId} Started", stream.Id);

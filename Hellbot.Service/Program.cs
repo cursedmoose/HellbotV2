@@ -19,7 +19,6 @@ using Serilog;
 using Serilog.Enrichers.ShortTypeName;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
-using System.Data;
 using TwitchLib.EventSub.Websockets.Extensions;
 
 Log.Logger = new LoggerConfiguration()
