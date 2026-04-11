@@ -64,5 +64,15 @@ namespace Hellbot.Service.Clients.Twitch
                 UseShellExecute = true
             });
         }
+
+        public Task SendMessageAsync(string message, string? replyId = null)
+        {
+            return API.Chat.SendChatMessage(new()
+            {
+                BroadcasterId = _options.ChannelId,
+                SenderId = _options.ChannelId,
+                Message = message
+            });
+        }
     }
 }

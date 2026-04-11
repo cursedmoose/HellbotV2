@@ -7,8 +7,15 @@ namespace Hellbot.Service.Controllers
     [ApiController]
     public class ChatEventsController(IEventBus bus) : EventController(bus)
     {
-        [HttpPost("chat")]
-        public Task<IActionResult> ChatMessage(ChatReceivedPayload evt)
+        [HttpPost("chat/send")]
+        public Task<IActionResult> SendChatMessage(SendChatPayload evt)
+            => Publish(new SendChatMessage
+            {
+                Data = evt,
+                Source = EventSource.API
+            });
+        [HttpPost("chat/receive")]
+        public Task<IActionResult> ReceiveChatMessage(ChatReceivedPayload evt)
             => Publish(new ChatMessageReceived
             {
                 Data = evt,
