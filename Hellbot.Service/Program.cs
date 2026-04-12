@@ -62,7 +62,7 @@ builder.Services.AddOptions<ElevenLabsOptions>()
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database"));
 builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 builder.Services.AddScoped<EventTable>();
-builder.Services.AddScoped<VoiceProfilesTable>();
+builder.Services.AddScoped<VoiceTable>();
 
 
 builder.Services.AddFluentMigratorCore()

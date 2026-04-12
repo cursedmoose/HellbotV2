@@ -1,12 +1,12 @@
 ﻿using Dapper;
-using Hellbot.Service.Clients.ElevenLabs;
+using Hellbot.Core.TTS;
 using System.Text.Json;
 
 namespace Hellbot.Service.Data.Tables
 {
-    public class VoiceProfilesTable(IDbConnectionFactory factory)
+    public class VoiceTable(IDbConnectionFactory factory)
     {
-        public async Task InsertAsync(VoiceProfile profile)
+        public async Task InsertAsync(Voice voice)
         {
             using var connection = factory.CreateConnection();
 
@@ -15,16 +15,16 @@ namespace Hellbot.Service.Data.Tables
             VALUES (@Id, @Name, @Settings)
         ", new
             {
-                Id = profile.Voice.VoiceId,
-                Name = profile.Voice.VoiceName,
-                Settings = JsonSerializer.Serialize(profile.Settings)
+                voice.Id,
+                voice.Name,
+                Settings = JsonSerializer.Serialize(voice.Settings)
             });
         }
 
-        public async Task<VoiceProfile?> Get(string VoiceId)
+        public async Task<Voice?> Get(string VoiceId)
         {
             using var connection = factory.CreateConnection();
-            var voice = await connection.QuerySingleOrDefaultAsync<VoiceProfile>(@"
+            var voice = await connection.QuerySingleOrDefaultAsync<Voice>(@"
                 SELECT id, name, settings
                 FROM voices
                 WHERE voice_id = @VoiceId
@@ -33,10 +33,10 @@ namespace Hellbot.Service.Data.Tables
             return voice;
         }
 
-        public async Task<IEnumerable<VoiceProfile>> GetAll()
+        public async Task<IEnumerable<Voice>> GetAll()
         {
             using var connection = factory.CreateConnection();
-            var voices = await connection.QueryAsync<VoiceProfile>(@"
+            var voices = await connection.QueryAsync<Voice>(@"
                 SELECT id, name, settings
                 FROM voices
             ");
