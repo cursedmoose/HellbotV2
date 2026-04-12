@@ -7,5 +7,6 @@
         public required EventSource Source { get; init; }
         public required TPayload Data { get; init; }
         public Guid? StreamId { get; set; } = null;
+        public EventContext Context { get; set; } = new();
     }
 }
