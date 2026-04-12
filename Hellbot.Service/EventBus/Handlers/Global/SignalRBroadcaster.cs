@@ -5,12 +5,9 @@ namespace Hellbot.Service.EventBus.Handlers.Global
 {
     public class SignalREventBroadcaster(IHubContext<EventHub> hubContext) : IEventHandler
     {
-        public void Register(IEventBus bus)
-        {
-            bus.Subscribe<IHellbotEvent>(Broadcast);
-        }
+        public bool CanHandle(IHellbotEvent evt) => true;
 
-        private Task Broadcast(IHellbotEvent evt)
+        public Task Handle(IHellbotEvent evt)
         {
             return hubContext.Clients.All.SendAsync("ReceiveEvent", new
             {

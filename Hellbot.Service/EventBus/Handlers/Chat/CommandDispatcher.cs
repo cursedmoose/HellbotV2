@@ -1,10 +1,9 @@
-﻿using Hellbot.Core.Events;
-using Hellbot.Core.Events.Chat;
+﻿using Hellbot.Core.Events.Chat;
 using Hellbot.Service.Commands;
 
 namespace Hellbot.Service.EventBus.Handlers.Chat
 {
-    public class CommandDispatcher(IEnumerable<ICommandHandler> handlers, ILogger<CommandDispatcher> logger) : IEventHandler
+    public class CommandDispatcher(IEnumerable<ICommandHandler> handlers, ILogger<CommandDispatcher> logger) : EventHandlerBase<CommandRequested>
     {
         private readonly Dictionary<string, ICommandHandler> _handlerMap = handlers
                 .SelectMany(h => GetKeys(h)
@@ -24,13 +23,7 @@ namespace Hellbot.Service.EventBus.Handlers.Chat
                     yield return alias;
             }
         }
-
-        public void Register(IEventBus bus)
-        {
-            bus.Subscribe<CommandRequested>(Handle);
-        }
-
-        private async Task Handle(CommandRequested evt)
+        public override async Task Handle(CommandRequested evt)
         {
             if (!_handlerMap.TryGetValue(evt.Data.Command, out var handler))
             {
@@ -44,7 +37,6 @@ namespace Hellbot.Service.EventBus.Handlers.Chat
                 handler.Handle(data);
                 return;
             }
-
         }
     }
 }

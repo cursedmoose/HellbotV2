@@ -9,11 +9,13 @@ using Hellbot.Service.Config;
 using Hellbot.Service.Data;
 using Hellbot.Service.Data.Migrations;
 using Hellbot.Service.Data.Tables;
+using Hellbot.Service.Data.Tables.Users;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.EventBus.Middleware;
 using Hellbot.Service.EventBus.Producers;
 using Hellbot.Service.Tts;
+using Hellbot.Service.Users;
 using OBSWebsocketDotNet;
 using Scrutor;
 using Serilog;
@@ -63,6 +65,7 @@ builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database
 builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 builder.Services.AddScoped<EventTable>();
 builder.Services.AddScoped<VoiceTable>();
+builder.Services.AddScoped<UserTable>();
 
 
 builder.Services.AddFluentMigratorCore()
@@ -106,6 +109,8 @@ builder.Services.Scan(scan => scan
 
 // Middleware (order matters, but not really)
 builder.Services.AddSingleton<IEventMiddleware, EventLogger>();
+builder.Services.AddScoped<IUserResolver, UserResolver>();
+builder.Services.AddScoped<IEventMiddleware, UserContextEnricher>();
 builder.Services.AddSingleton<IEventMiddleware, StreamSessionContextEnricher>();
 
 // Producers
@@ -136,17 +141,6 @@ app.UseAuthorization();
 
 app.MapHub<EventHub>("/eventsHub");
 app.MapControllers();
-
-using (var scope = app.Services.CreateScope())
-{
-    var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
-
-    var handlers = scope.ServiceProvider.GetServices<IEventHandler>().ToList();
-    foreach (var handler in handlers)
-    {
-        handler.Register(eventBus);
-    }
-}
 
 try
 {

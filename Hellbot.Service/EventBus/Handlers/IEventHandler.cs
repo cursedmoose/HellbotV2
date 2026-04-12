@@ -4,6 +4,7 @@ namespace Hellbot.Service.EventBus.Handlers
 {
     public interface IEventHandler
     {
-        void Register(IEventBus bus);
+        bool CanHandle(IHellbotEvent evt);
+        Task Handle(IHellbotEvent evt);
     }
 }

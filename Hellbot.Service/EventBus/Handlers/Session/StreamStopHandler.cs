@@ -1,17 +1,11 @@
-﻿using Hellbot.Core.Events;
-using Hellbot.Core.Events.Session;
+﻿using Hellbot.Core.Events.Session;
 using Hellbot.Core.Sessions;
 
 namespace Hellbot.Service.EventBus.Handlers.Session
 {
-    public class StreamStopHandler(IStreamSessionManager sessionManager, ILogger<StreamStopHandler> logger) : IEventHandler
+    public class StreamStopHandler(IStreamSessionManager sessionManager, ILogger<StreamStopHandler> logger) : EventHandlerBase<StreamStopped>
     {
-        public void Register(IEventBus bus)
-        {
-            bus.Subscribe<StreamStopped>(Handle);
-        }
-
-        private Task Handle(StreamStopped evt)
+        public override Task Handle(StreamStopped evt)
         {
             var stream = sessionManager.EndSession(evt.Timestamp);
             logger.LogInformation("Stream Session {SessionId} Stopped", stream?.Id);

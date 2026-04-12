@@ -1,28 +1,32 @@
 ﻿using Hellbot.Core.Events;
-using Hellbot.Service.EventBus.Handlers.Global;
+using Hellbot.Service.EventBus.Handlers;
 
 namespace Hellbot.Service.EventBus
 {
-    public class HellbotEventBus(IEnumerable<IEventMiddleware> middlewares, ILogger<HellbotEventBus> logger) : IEventBus
+    public class HellbotEventBus(IServiceScopeFactory serviceScope, ILogger<HellbotEventBus> logger) : IEventBus
     {
         private readonly Dictionary<Type, List<Func<IHellbotEvent, Task>>> _handlers = [];
         public async Task Publish(IHellbotEvent evt)
         {
+            using var scope = serviceScope.CreateScope();
+            var middlewares = scope.ServiceProvider.GetServices<IEventMiddleware>();
             var eventType = evt.GetType();
+            var handlers = scope.ServiceProvider.GetServices<IEventHandler>().Where(h => h.CanHandle(evt));
 
             foreach (var middleware in middlewares)
             {
                 await middleware.Invoke(evt);
             }
 
-            foreach (var (registeredType, handlers) in _handlers)
+            foreach (var handler in handlers)
             {
-                if (registeredType.IsAssignableFrom(eventType))
+                try
                 {
-                    foreach (var handler in handlers)
-                    {
-                        await handler(evt);
-                    }
+                    await handler.Handle(evt);
+                }
+                catch(Exception e)
+                {
+                    logger.LogError("{Handler} failed: {Exception}", handler.GetType(), e.Message);
                 }
             }
         }

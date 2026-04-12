@@ -4,14 +4,9 @@ using Hellbot.Service.Clients.Twitch;
 
 namespace Hellbot.Service.EventBus.Handlers.Chat
 {
-    public class SendChatHandler(TwitchClient _twitch, ILogger<SendChatHandler> logger) : IEventHandler
+    public class SendChatHandler(TwitchClient _twitch, ILogger<SendChatHandler> logger) : EventHandlerBase<SendChatMessage>
     {
-        public void Register(IEventBus bus)
-        {
-            bus.Subscribe<SendChatMessage>(Handle);
-        }
-
-        private async Task Handle(SendChatMessage evt)
+        public override async Task Handle(SendChatMessage evt)
         {
             var message = evt.Data.Message;
             var platform = evt.Data.Channel.Platform;
