@@ -27,7 +27,7 @@ namespace Hellbot.Service.Data.Tables.Users
 
         public async Task<Guid?> GetUserId(PlatformSource platform, string userId)
         {
-            return await db.Connection.QuerySingleOrDefaultAsync<Guid>(@"
+            return await db.Connection.QuerySingleOrDefaultAsync<Guid?>(@"
                 SELECT user_id
                 FROM user_identities
                 WHERE platform = @Platform

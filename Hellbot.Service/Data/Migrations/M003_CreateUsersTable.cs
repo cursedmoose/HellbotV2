@@ -12,7 +12,7 @@ namespace Hellbot.Service.Data.Migrations
                 .WithColumn("status").AsString()
                 .WithColumn("role").AsInt32()
                 .WithColumn("joined_at").AsDateTime().Nullable()
-                .WithColumn("created_at").AsDateTime();
+                .WithColumn("created_at").AsDateTime().WithDefaultValue(SystemMethods.CurrentUTCDateTime);
         }
 
         public override void Down()
