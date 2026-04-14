@@ -63,9 +63,11 @@ builder.Services.AddOptions<ElevenLabsOptions>()
 // Database
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database"));
 builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
+builder.Services.AddScoped<IDbContext, SqliteDbContext>();
 builder.Services.AddScoped<EventTable>();
 builder.Services.AddScoped<VoiceTable>();
 builder.Services.AddScoped<UserTable>();
+builder.Services.AddScoped<UserIdentitiesTable>();
 
 
 builder.Services.AddFluentMigratorCore()
@@ -107,11 +109,12 @@ builder.Services.Scan(scan => scan
     .AsImplementedInterfaces()
     .WithScopedLifetime());
 
+builder.Services.AddScoped<IUserService, UserService>();
+
 // Middleware (order matters, but not really)
-builder.Services.AddSingleton<IEventMiddleware, EventLogger>();
-builder.Services.AddScoped<IUserResolver, UserResolver>();
+builder.Services.AddScoped<IEventMiddleware, EventLogger>();
 builder.Services.AddScoped<IEventMiddleware, UserContextEnricher>();
-builder.Services.AddSingleton<IEventMiddleware, StreamSessionContextEnricher>();
+builder.Services.AddScoped<IEventMiddleware, StreamSessionContextEnricher>();
 
 // Producers
 builder.Services.AddHostedService<HeartbeatProducer>();

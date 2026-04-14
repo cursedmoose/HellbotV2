@@ -3,15 +3,14 @@ using Hellbot.Service.Users;
 
 namespace Hellbot.Service.EventBus.Middleware
 {
-    public class UserContextEnricher(IUserResolver userResolver) : IEventMiddleware
+    public class UserContextEnricher(IUserService userService) : IEventMiddleware
     {
         public async Task Invoke(IHellbotEvent evt)
         {
-            if (evt.Context.UserContext != null)
+            if (evt.Context.UserContext is UserContext context)
             {
-                var context = evt.Context.UserContext;
-                var user = await userResolver.Resolve(context.Identity.UserId, context.Identity.Platform);
-                evt.Context.UserContext.Info = user;
+                var user = await userService.GetOrCreateUser(context.Identity);
+                context.Info = user;
             }
 
             return;

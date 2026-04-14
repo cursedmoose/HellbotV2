@@ -2,6 +2,7 @@
 using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
 using Hellbot.Core.Events.Users;
+using Hellbot.Core.Users;
 using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
@@ -174,10 +175,18 @@ namespace Hellbot.Service.EventBus.Producers
         {
             var message = e.Payload.Event.Message.Text;
             IHellbotEvent hellbotEvent;
+            var identity = new UserIdentity
+            {
+                Platform = PlatformSource.Twitch,
+                UserId = e.Payload.Event.ChatterUserId,
+                Username = e.Payload.Event.ChatterUserName
+            };
+            var context = EventContext.From(identity);
             if (TryParseCommand(message, out string command, out string[] commandArgs))
             {
                 hellbotEvent = new CommandRequested
                 {
+                    Context = context,
                     Data = new()
                     {
                         Command = command,
@@ -194,6 +203,7 @@ namespace Hellbot.Service.EventBus.Producers
 
                 hellbotEvent = new ChatMessageReceived
                 {
+                    Context = context,
                     Data = new()
                     {
                         User = e.Payload.Event.ChatterUserId,
