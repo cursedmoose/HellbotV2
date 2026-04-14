@@ -1,6 +1,4 @@
 ﻿using FluentMigrator;
-using Microsoft.AspNetCore.Http.HttpResults;
-using TwitchLib.EventSub.Core.Models.Moderate;
 
 namespace Hellbot.Service.Data.Migrations
 {
@@ -11,7 +9,10 @@ namespace Hellbot.Service.Data.Migrations
         {
             Create.Table("users")
                 .WithColumn("id").AsGuid().PrimaryKey()
-                .WithColumn("twitchId").AsString();
+                .WithColumn("status").AsString()
+                .WithColumn("role").AsInt32()
+                .WithColumn("joined_at").AsDateTime().Nullable()
+                .WithColumn("created_at").AsDateTime();
         }
 
         public override void Down()

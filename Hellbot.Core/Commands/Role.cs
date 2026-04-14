@@ -3,6 +3,7 @@
     public enum Role
     {
         None = 0,
+        User = 1,
         Member = 10,
         Premium = 20,
         Moderator = 50,

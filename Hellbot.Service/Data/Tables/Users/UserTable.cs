@@ -1,35 +1,58 @@
 ﻿using Dapper;
-using Hellbot.Core.TTS;
 using Hellbot.Core.Users;
+using System.Data;
 
 namespace Hellbot.Service.Data.Tables.Users
 {
-    public class UserTable(IDbConnectionFactory factory)
+    public class UserTable(IDbContext db)
     {
-        public async Task Create(User user)
+        public async Task Create(User user, IDbTransaction? tx = null)
         {
-            using var connection = factory.CreateConnection();
-
-            await connection.ExecuteAsync(@"
-            INSERT INTO users (id, twitchId)
-            VALUES (@Id, @TwitchId)
-            ", new
+            await db.Connection.ExecuteAsync(@"
+            INSERT INTO users (id, status, role, joined_at)
+            VALUES (@Id, @Status, @Role, @JoinedAt)
+        ",
+            new
             {
-                user.Id,
-                user.TwitchId
-            });
+                Id = user.Id,
+                Status = user.Status,
+                Role = user.Role.ToString(),
+                JoinedAt = user.JoinedAt
+            },
+            transaction: tx);
         }
 
-        public async Task<User?> GetByTwitchId(string TwitchId)
+        public async Task<User?> Get(Guid id)
         {
-            using var connection = factory.CreateConnection();
-            var user = await connection.QuerySingleOrDefaultAsync<User>(@"
-                SELECT id, twitchId
-                FROM users
-                WHERE twitchId = @TwitchId
-            ", new { TwitchId });
+            return await db.Connection.QuerySingleOrDefaultAsync<User>(@"
+            SELECT
+                id,
+                status,
+                role,
+                joined_at AS JoinedAt
+            FROM users
+            WHERE id = @Id
+        ",
+            new { Id = id });
+        }
 
-            return user;
+        public async Task Update(User user, IDbTransaction? tx = null)
+        {
+            await db.Connection.ExecuteAsync(@"
+            UPDATE users
+            SET status = @Status,
+                role = @Role,
+                joined_at = @JoinedAt
+            WHERE id = @Id
+        ",
+            new
+            {
+                Id = user.Id,
+                Status = user.Status,
+                Role = user.Role.ToString(),
+                JoinedAt = user.JoinedAt
+            },
+            transaction: tx);
         }
     }
 }
