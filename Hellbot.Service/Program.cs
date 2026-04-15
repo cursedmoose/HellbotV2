@@ -59,15 +59,18 @@ builder.Services.AddOptions<ElevenLabsOptions>()
     .Bind(builder.Configuration.GetSection("ElevenLabs"))
     .Validate(o => !string.IsNullOrEmpty(o.ApiKey), "ElevenLabs:ApiKey required!")
     .ValidateOnStart();
+builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database"));
 
 // Database
-builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database"));
 builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 builder.Services.AddScoped<IDbContext, SqliteDbContext>();
-builder.Services.AddScoped<EventTable>();
-builder.Services.AddScoped<VoiceTable>();
-builder.Services.AddScoped<UserTable>();
-builder.Services.AddScoped<UserIdentitiesTable>();
+builder.Services.AddSingleton<UserCache>();
+
+builder.Services.Scan(scan => scan
+    .FromAssemblyOf<EventTable>()
+    .AddClasses(classes => classes.Where(t => t.Name.EndsWith("Table")))
+    .AsSelf()
+    .WithScopedLifetime());
 
 
 builder.Services.AddFluentMigratorCore()

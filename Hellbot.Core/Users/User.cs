@@ -12,11 +12,4 @@ namespace Hellbot.Core.Users
 
         public bool Joined => JoinedAt.HasValue;
     }
-
-    public readonly record struct UserIdentity
-    {
-        public required PlatformSource Platform { get; init; }
-        public required string UserId { get; init; }
-        public string? Username { get; init; }
-    }
 }
