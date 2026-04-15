@@ -66,7 +66,7 @@ namespace Hellbot.Service.Users
             }
         }
 
-        public async Task<UserCustomizationSet> GetUserSettings(Guid userId)
+        public async Task<UserCustomizationSet> GetUserCustomizations(Guid userId)
         {
             if (cache.TryGetCustomizations(userId, out UserCustomizationSet? set)) return set;
 

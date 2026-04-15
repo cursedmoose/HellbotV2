@@ -1,5 +1,4 @@
 ﻿using Hellbot.Core.Commands;
-using Hellbot.Core.Events;
 
 namespace Hellbot.Core.Users
 {

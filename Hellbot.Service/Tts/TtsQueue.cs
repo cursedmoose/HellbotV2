@@ -1,17 +1,16 @@
-﻿using Hellbot.Core.Events.Chat;
-using System.Threading.Channels;
+﻿using System.Threading.Channels;
 
 namespace Hellbot.Service.Tts
 {
     public class TtsQueue : ITtsQueue
     {
-        private readonly Channel<TtsRequested> _channel =
-            Channel.CreateUnbounded<TtsRequested>();
+        private readonly Channel<TtsRequest> _channel =
+            Channel.CreateUnbounded<TtsRequest>();
 
-        public ValueTask EnqueueAsync(TtsRequested evt)
+        public ValueTask EnqueueAsync(TtsRequest evt)
             => _channel.Writer.WriteAsync(evt);
 
-        public IAsyncEnumerable<TtsRequested> DequeueAllAsync(CancellationToken ct)
+        public IAsyncEnumerable<TtsRequest> DequeueAllAsync(CancellationToken ct)
             => _channel.Reader.ReadAllAsync(ct);
 
         public int Length() => _channel.Reader.Count;

@@ -4,7 +4,6 @@
     public record TtsRequestPayload
     {
         public required string Text { get; init; }
-        public required string VoiceId { get; init; }
         public int Priority { get; init; } = 0; 
     }
 

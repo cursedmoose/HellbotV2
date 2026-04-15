@@ -4,13 +4,13 @@ namespace Hellbot.Core.Events
 {
     public record struct EventContext
     {
-        public UserContext? UserContext { get; set; }
+        public UserContext? User { get; set; }
 
         public static EventContext From(UserIdentity identity)
         {
             return new EventContext()
             {
-                UserContext = new UserContext() { Identity = identity }
+                User = new UserContext() { Identity = identity }
             };
         }
     }

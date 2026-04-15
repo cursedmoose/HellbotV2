@@ -9,7 +9,6 @@ using Hellbot.Service.Config;
 using Hellbot.Service.Data;
 using Hellbot.Service.Data.Migrations;
 using Hellbot.Service.Data.Tables;
-using Hellbot.Service.Data.Tables.Users;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.EventBus.Middleware;

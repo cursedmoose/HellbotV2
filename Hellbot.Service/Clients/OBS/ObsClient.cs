@@ -45,16 +45,20 @@ namespace Hellbot.Service.Clients.OBS
             _logger.LogInformation("OBS Websocket disconnected due to {Reason}.", e.DisconnectReason ?? "OBS is not running.");
         }
 
-        public void EnableScene(string sceneId)
+        public void EnableScene(string? sceneId)
         {
+            if (sceneId is null) return;
+
             if (_scenes.TryGetValue(sceneId, out var sceneItem))
             {
                 API.SetSceneItemEnabled(sceneItem.Scene, sceneItem.ItemId, true);
             }
         }
 
-        public void DisableScene(string sceneId)
+        public void DisableScene(string? sceneId)
         {
+            if (sceneId is null) return;
+
             if (_scenes.TryGetValue(sceneId, out var sceneItem))
             {
                 API.SetSceneItemEnabled(sceneItem.Scene, sceneItem.ItemId, false);
