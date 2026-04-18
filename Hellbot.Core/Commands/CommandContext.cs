@@ -6,8 +6,7 @@ namespace Hellbot.Core.Commands
     {
         public required string Command { get; init; }
         public required string[] CommandArgs { get; init; } = [];
-        public required string User { get; init; }
-        public required Role UserRole { get; init; }
+        public UserContext? User { get; init; }
         public required EventSource CommandSource { get; init; }
     }
 }

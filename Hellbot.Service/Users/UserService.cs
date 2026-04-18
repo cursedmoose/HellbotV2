@@ -92,5 +92,10 @@ namespace Hellbot.Service.Users
             cache.SetCustomizations(userId, settings);
             return settings;
         }
+
+        public async Task<Guid?> GetUserId(UserIdentity userIdentity)
+        {
+            return await identities.GetUserId(userIdentity.Platform, userIdentity.UserId);
+        }
     }
 }

@@ -37,7 +37,7 @@ namespace Hellbot.Service.Commands
 
         private bool UserHasPermissions(CommandContext context)
         {
-            return context.UserRole >= RequiredRole;
+            return context.User?.Info?.Role >= RequiredRole;
         }
     }
 }

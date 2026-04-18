@@ -137,17 +137,6 @@ namespace Hellbot.Service.EventBus.Producers
             _logger.LogError("Websocket {SessionId} - Error occurred! {Error}:{Message}", _eventSubWebsocketClient.SessionId, e.Exception, e.Message);
         }
 
-        private static Role GetDefaultRole(ChannelChatMessageArgs e)
-        {
-            return e.Payload.Event switch
-            {
-                { IsBroadcaster: true } => Role.Admin,
-                { IsSubscriber: true } => Role.Premium,
-                { IsVip: true } => Role.Premium,
-                _ => Role.None
-            };
-        }
-
         private static bool TryParseCommand(string message, out string command, out string[] args)
         {
             command = null!;
@@ -171,17 +160,22 @@ namespace Hellbot.Service.EventBus.Producers
             return true;
         }
 
+        private static EventContext CreateContext(string userId, string userName)
+        {
+            var identity = new UserIdentity
+            {
+                Platform = PlatformSource.Twitch,
+                UserId = userId,
+                Username = userName
+            };
+            return EventContext.From(identity);
+        }
+
         private async Task OnChannelChatMessage(object? sender, ChannelChatMessageArgs e)
         {
             var message = e.Payload.Event.Message.Text;
             IHellbotEvent hellbotEvent;
-            var identity = new UserIdentity
-            {
-                Platform = PlatformSource.Twitch,
-                UserId = e.Payload.Event.ChatterUserId,
-                Username = e.Payload.Event.ChatterUserName
-            };
-            var context = EventContext.From(identity);
+            var context = CreateContext(e.Payload.Event.ChatterUserId, e.Payload.Event.ChatterUserName);
             if (TryParseCommand(message, out string command, out string[] commandArgs))
             {
                 hellbotEvent = new CommandRequested
@@ -192,8 +186,6 @@ namespace Hellbot.Service.EventBus.Producers
                         Command = command,
                         CommandArgs = commandArgs,
                         CommandSource = EventSource.Twitch,
-                        User = e.Payload.Event.ChatterUserId,
-                        UserRole = GetDefaultRole(e)
                     },
                     Source = EventSource.Twitch
                 };
@@ -206,7 +198,6 @@ namespace Hellbot.Service.EventBus.Producers
                     Context = context,
                     Data = new()
                     {
-                        User = e.Payload.Event.ChatterUserId,
                         Message = e.Payload.Event.Message.Text,
                         MessageId = e.Payload.Event.MessageId,
                     },

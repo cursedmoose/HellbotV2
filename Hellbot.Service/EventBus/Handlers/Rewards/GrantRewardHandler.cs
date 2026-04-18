@@ -8,8 +8,15 @@ namespace Hellbot.Service.EventBus.Handlers.Rewards
     {
         public async override Task Handle(GrantReward evt)
         {
-            var rewardReceiver = await userService.GetOrCreateUser(evt.Data.Receiver);
-            await db.Create(rewardReceiver.Id, evt.Data.Reward);
+            var rewardReceiver = await userService.GetUserId(evt.Data.Receiver);
+            if (rewardReceiver is Guid userId)
+            {
+                await db.Create(userId, evt.Data.Reward);
+            }
+            else
+            {
+                logger.LogWarning("Could not grant user={User} a reward={Reward} as they did not exist!", evt.Data.Receiver, evt.Data.Reward.Type);
+            }
 
             return;
         }

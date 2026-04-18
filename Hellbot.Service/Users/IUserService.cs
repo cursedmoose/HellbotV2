@@ -6,5 +6,6 @@ namespace Hellbot.Service.Users
     {
         public Task<User> GetOrCreateUser(UserIdentity identity);
         public Task<UserCustomizationSet> GetUserCustomizations(Guid Id);
+        public Task<Guid?> GetUserId(UserIdentity identity);
     }
 }

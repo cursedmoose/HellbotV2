@@ -31,7 +31,7 @@ namespace Hellbot.Service.EventBus.Handlers.Chat
                 return;
             }
 
-            var data = evt.Data with { Command = handler.Command };
+            var data = evt.Data with { Command = handler.Command, User = evt.Context.User };
             if (handler.CanHandle(data))
             {
                 handler.Handle(data);
