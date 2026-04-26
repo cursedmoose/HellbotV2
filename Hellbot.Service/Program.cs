@@ -1,6 +1,7 @@
 using FluentMigrator.Runner;
 using Hellbot.Core.Events;
 using Hellbot.Core.Sessions;
+using Hellbot.Service.Audio;
 using Hellbot.Service.Clients.ElevenLabs;
 using Hellbot.Service.Clients.OBS;
 using Hellbot.Service.Clients.Twitch;
@@ -21,7 +22,6 @@ using Serilog;
 using Serilog.Enrichers.ShortTypeName;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
-using System.Windows.Input;
 using TwitchLib.EventSub.Websockets.Extensions;
 
 Log.Logger = new LoggerConfiguration()
@@ -43,6 +43,7 @@ Log.Logger = new LoggerConfiguration()
     )
     .CreateLogger();
 
+Console.OutputEncoding = System.Text.Encoding.UTF8;
 Log.Information($"Application Starting: {DateTime.Now}");
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
@@ -85,6 +86,7 @@ builder.Services.AddHostedService<Hellbot.Service.Data.MigrationRunner>();
 
 // Event Bus
 builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
+builder.Services.AddSingleton<ITtsPlaybackGate, TtsPlaybackGate>();
 builder.Services.AddSingleton<ITtsQueue, TtsQueue>();
 builder.Services.AddSingleton<IAudioPlayer, NAudioPlayer>();
 builder.Services.AddSingleton<IStreamSessionManager, StreamSessionManager>();
@@ -123,6 +125,7 @@ builder.Services.AddHostedService<HeartbeatProducer>();
 builder.Services.AddHostedService<TtsWorker>();
 builder.Services.AddHostedService<TwitchEventSubProducer>();
 builder.Services.AddHostedService<ObsEventProducer>();
+builder.Services.AddHostedService<MicCaptureService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
