@@ -7,6 +7,7 @@ namespace Hellbot.Service.Audio
     public class MicCaptureService(IEventBus bus, ILogger<MicCaptureService> logger) : BackgroundService
     {
         private WaveInEvent? _waveIn;
+        private readonly WaveFormat _targetFormat = new WaveFormat(16000, 16, 1);
         private readonly EventSource _source = EventSource.Internal with { Channel = "MicCaptureService" };
         private const int Threshold = 500; // tweak later
         private DateTimeOffset? _speechStart;
@@ -23,6 +24,7 @@ namespace Hellbot.Service.Audio
                 DeviceNumber = 0,
                 WaveFormat = new WaveFormat(16000, 1)
             };
+            logger.LogInformation("Device WaveFormat: {Format}", _waveIn.WaveFormat);
 
             _waveIn.DataAvailable += OnDataAvailable;
             _waveIn.RecordingStopped += OnRecordingStopped;
@@ -43,18 +45,14 @@ namespace Hellbot.Service.Audio
 
         private void OnDataAvailable(object? sender, WaveInEventArgs e)
         {
-            bool hasVoice = false;
             var now = DateTimeOffset.UtcNow;
 
-            for (int i = 0; i < e.BytesRecorded; i += 2)
+            if (IsSpeaking)
             {
-                short sample = BitConverter.ToInt16(e.Buffer, i);
-                if (Math.Abs(sample) > Threshold)
-                {
-                    hasVoice = true;
-                    break;
-                }
+                _audioBuffer.AddRange(e.Buffer.AsSpan(0, e.BytesRecorded).ToArray());
             }
+
+            bool hasVoice = DetectVoice(e);
 
             if (hasVoice)
             {
@@ -70,13 +68,10 @@ namespace Hellbot.Service.Audio
             }
             else if (IsSpeaking)
             {
-                _audioBuffer.AddRange(e.Buffer.AsSpan(0, e.BytesRecorded).ToArray());
-
                 // don't end immediately—wait for silence window
                 if (now - _lastVoiceDetected > SilenceGrace)
                 {
                     var duration = now - _speechStart!.Value;
-                    logger.LogInformation("Publishing audio, bytes={ByteCount}, duration={Duration}", _audioBuffer.Count, duration.TotalSeconds);
                     PublishVoiceSegment(now);
 
                     _speechStart = null;
@@ -85,6 +80,20 @@ namespace Hellbot.Service.Audio
                     PublishSpeechEnded(duration);
                 }
             }
+        }
+
+        private bool DetectVoice(WaveInEventArgs e)
+        {
+            for (int i = 0; i < e.BytesRecorded; i += 2)
+            {
+                short sample = BitConverter.ToInt16(e.Buffer, i);
+                if (Math.Abs(sample) > Threshold)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void PublishSpeechStarted(DateTimeOffset now)
@@ -110,6 +119,7 @@ namespace Hellbot.Service.Audio
 
         public void PublishVoiceSegment(DateTimeOffset now)
         {
+            logger.LogInformation("Segment bytes: {Bytes}", _audioBuffer.Count);
             bus.Publish(new VoiceSegmentCaptured
             {
                 Data = new()

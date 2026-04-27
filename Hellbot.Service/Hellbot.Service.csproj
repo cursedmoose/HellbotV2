@@ -25,6 +25,7 @@
     <PackageReference Include="TwitchLib.Api" Version="3.10.2" />
     <PackageReference Include="TwitchLib.EventSub.Websockets" Version="0.8.0" />
     <PackageReference Include="Whisper.net" Version="1.9.0" />
+    <PackageReference Include="Whisper.net.Runtime" Version="1.9.0" />
   </ItemGroup>
 
   <ItemGroup>
