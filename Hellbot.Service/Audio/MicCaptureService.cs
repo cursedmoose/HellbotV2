@@ -1,11 +1,16 @@
-﻿using NAudio.Wave;
+﻿using Hellbot.Core.Events;
+using Hellbot.Core.Events.Audio;
+using NAudio.Wave;
 
 namespace Hellbot.Service.Audio
 {
-    public class MicCaptureService(ILogger<MicCaptureService> logger) : BackgroundService
+    public class MicCaptureService(IEventBus bus, ILogger<MicCaptureService> logger) : BackgroundService
     {
         private WaveInEvent? _waveIn;
-
+        private EventSource _source = EventSource.Internal with { Channel = "MicCaptureService" };
+        private const int Threshold = 500; // tweak later
+        private DateTimeOffset? _speechStart;
+        private bool IsSpeaking { get { return _speechStart is not null; } }
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             LogAvailableInputDevices();
@@ -33,8 +38,7 @@ namespace Hellbot.Service.Audio
             return Task.CompletedTask;
         }
 
-        private bool _isSpeaking = false;
-        private const int Threshold = 500; // tweak later
+
 
         private void OnDataAvailable(object? sender, WaveInEventArgs e)
         {
@@ -50,15 +54,28 @@ namespace Hellbot.Service.Audio
                 }
             }
 
-            if (hasVoice && !_isSpeaking)
+            if (hasVoice && !IsSpeaking)
             {
-                _isSpeaking = true;
+                _speechStart = DateTimeOffset.UtcNow;
                 logger.LogInformation("🗣️ Speech started");
+                bus.Publish(new SpeechStarted { 
+                    Data = new(),
+                    Source = _source,
+                });
             }
-            else if (!hasVoice && _isSpeaking)
+            else if (!hasVoice && IsSpeaking)
             {
-                _isSpeaking = false;
+                var duration = DateTimeOffset.UtcNow - (_speechStart ?? DateTimeOffset.UtcNow);
+                _speechStart = null;
                 logger.LogInformation("🤫 Speech ended");
+                bus.Publish(new SpeechEnded
+                {
+                    Data = new()
+                    {
+                        Duration = duration
+                    },
+                    Source = _source,
+                });
             }
         }
 
