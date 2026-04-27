@@ -57,7 +57,6 @@ namespace Hellbot.Service.Audio
             if (hasVoice && !IsSpeaking)
             {
                 _speechStart = DateTimeOffset.UtcNow;
-                logger.LogInformation("🗣️ Speech started");
                 bus.Publish(new SpeechStarted { 
                     Data = new(),
                     Source = _source,
@@ -67,7 +66,6 @@ namespace Hellbot.Service.Audio
             {
                 var duration = DateTimeOffset.UtcNow - (_speechStart ?? DateTimeOffset.UtcNow);
                 _speechStart = null;
-                logger.LogInformation("🤫 Speech ended");
                 bus.Publish(new SpeechEnded
                 {
                     Data = new()
