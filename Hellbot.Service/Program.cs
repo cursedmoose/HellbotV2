@@ -5,6 +5,7 @@ using Hellbot.Service.Audio;
 using Hellbot.Service.Clients.ElevenLabs;
 using Hellbot.Service.Clients.OBS;
 using Hellbot.Service.Clients.Twitch;
+using Hellbot.Service.Clients.Whisper;
 using Hellbot.Service.Commands;
 using Hellbot.Service.Config;
 using Hellbot.Service.Data;
@@ -60,6 +61,7 @@ builder.Services.AddOptions<ElevenLabsOptions>()
     .Validate(o => !string.IsNullOrEmpty(o.ApiKey), "ElevenLabs:ApiKey required!")
     .ValidateOnStart();
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database"));
+builder.Services.Configure<WhisperOptions>(builder.Configuration.GetSection("Whisper"));
 
 // Database
 builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
@@ -97,6 +99,8 @@ builder.Services.AddTwitchLibEventSubWebsockets();
 builder.Services.AddSingleton<TwitchClient>();
 builder.Services.AddSingleton<OBSWebsocket>();
 builder.Services.AddSingleton<ObsClient>();
+builder.Services.AddSingleton<WhisperClient>();
+
 
 // Handlers
 builder.Services.Scan(scan => scan
