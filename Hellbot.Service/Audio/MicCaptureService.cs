@@ -7,10 +7,13 @@ namespace Hellbot.Service.Audio
     public class MicCaptureService(IEventBus bus, ILogger<MicCaptureService> logger) : BackgroundService
     {
         private WaveInEvent? _waveIn;
-        private EventSource _source = EventSource.Internal with { Channel = "MicCaptureService" };
+        private readonly EventSource _source = EventSource.Internal with { Channel = "MicCaptureService" };
         private const int Threshold = 500; // tweak later
         private DateTimeOffset? _speechStart;
+        private DateTimeOffset _lastVoiceDetected;
+        private static readonly TimeSpan SilenceGrace = TimeSpan.FromMilliseconds(750);
         private bool IsSpeaking { get { return _speechStart is not null; } }
+        private readonly List<byte> _audioBuffer = [];
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             LogAvailableInputDevices();
@@ -38,11 +41,10 @@ namespace Hellbot.Service.Audio
             return Task.CompletedTask;
         }
 
-
-
         private void OnDataAvailable(object? sender, WaveInEventArgs e)
         {
             bool hasVoice = false;
+            var now = DateTimeOffset.UtcNow;
 
             for (int i = 0; i < e.BytesRecorded; i += 2)
             {
@@ -54,27 +56,70 @@ namespace Hellbot.Service.Audio
                 }
             }
 
-            if (hasVoice && !IsSpeaking)
+            if (hasVoice)
             {
-                _speechStart = DateTimeOffset.UtcNow;
-                bus.Publish(new SpeechStarted { 
-                    Data = new(),
-                    Source = _source,
-                });
-            }
-            else if (!hasVoice && IsSpeaking)
-            {
-                var duration = DateTimeOffset.UtcNow - (_speechStart ?? DateTimeOffset.UtcNow);
-                _speechStart = null;
-                bus.Publish(new SpeechEnded
+                _lastVoiceDetected = now;
+
+                if (!IsSpeaking)
                 {
-                    Data = new()
-                    {
-                        Duration = duration
-                    },
-                    Source = _source,
-                });
+                    _speechStart = now;
+                    _audioBuffer.Clear();
+
+                    PublishSpeechStarted(now);
+                }
             }
+            else if (IsSpeaking)
+            {
+                _audioBuffer.AddRange(e.Buffer.AsSpan(0, e.BytesRecorded).ToArray());
+
+                // don't end immediately—wait for silence window
+                if (now - _lastVoiceDetected > SilenceGrace)
+                {
+                    var duration = now - _speechStart!.Value;
+                    logger.LogInformation("Publishing audio, bytes={ByteCount}, duration={Duration}", _audioBuffer.Count, duration.TotalSeconds);
+                    PublishVoiceSegment(now);
+
+                    _speechStart = null;
+                    _audioBuffer.Clear();
+
+                    PublishSpeechEnded(duration);
+                }
+            }
+        }
+
+        private void PublishSpeechStarted(DateTimeOffset now)
+        {
+            bus.Publish(new SpeechStarted
+            {
+                Data = new(),
+                Source = _source,
+            });
+        }
+
+        private void PublishSpeechEnded(TimeSpan duration)
+        {
+            bus.Publish(new SpeechEnded
+            {
+                Data = new()
+                {
+                    Duration = duration
+                },
+                Source = _source,
+            });
+        }
+
+        public void PublishVoiceSegment(DateTimeOffset now)
+        {
+            bus.Publish(new VoiceSegmentCaptured
+            {
+                Data = new()
+                {
+                    Start = _speechStart!.Value,
+                    End = now,
+                    RawAudio = [.. _audioBuffer]
+                },
+                Source = _source
+            });
         }
 
         private void OnRecordingStopped(object? sender, StoppedEventArgs e)
