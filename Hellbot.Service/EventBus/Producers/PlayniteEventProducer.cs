@@ -1,54 +1,62 @@
 ﻿using Hellbot.Core.Events;
 using Hellbot.Core.Events.Session;
 using Hellbot.Service.Clients.Playnite;
+using PlayniteWebsocket.Client;
 
 namespace Hellbot.Service.EventBus.Producers
 {
     public class PlayniteEventProducer : IHostedService
     {
-        private readonly PlayniteWebsocket _ws;
+        private readonly PlayniteClient _client;
+        private readonly PlayniteWebsocketClient _playnite;
         private readonly IEventBus _bus;
-        public PlayniteEventProducer(IEventBus bus)
+        private readonly ILogger<PlayniteEventProducer> _logger;
+        public PlayniteEventProducer(PlayniteClient playnite, IEventBus bus, ILogger<PlayniteEventProducer> logger)
         {
-            _ws = new PlayniteWebsocket("ws://127.0.0.1:6767");
+            _client = playnite;
+            _playnite = playnite.Websocket;
             _bus = bus;
+            _logger = logger;
 
-            _ws.Connected += () =>
+            _playnite.GameStarted += evt =>
             {
-                Console.WriteLine("[Playnite] Connected");
-            };
-
-            _ws.Disconnected += () =>
-            {
-                Console.WriteLine("[Playnite] Disconnected");
-            };
-
-            _ws.GameStarted += e =>
-            {
-                Console.WriteLine($"[Playnite] Game started: {e.Game}");
-
-                _bus.Publish(new GameStarted {
-                    Data = new(),
+                _logger.LogInformation("Started: {Game}", evt.Data.GameName);
+                _bus.Publish(new GameStarted
+                {
+                    Data = new GameStartedPayload
+                    {
+                        Id = evt.Data.GameId,
+                        Name = evt.Data.GameName 
+                    },
                     Source = EventSource.Playnite
                 });
             };
 
-            _ws.RawMessage += msg =>
+            _playnite.GameStopped += evt =>
             {
-                Console.WriteLine($"[Playnite RAW] {msg}");
+                _logger.LogInformation("Stopped: {Game}", evt.Data.GameName);
+                _bus.Publish(new GameStopped
+                {
+                    Data = new GameStoppedPayload
+                    {
+                        Id = evt.Data.GameId,
+                        Name = evt.Data.GameName
+                    },
+                    Source = EventSource.Playnite
+                });
             };
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            Console.WriteLine("[Playnite] Starting client...");
-            await _ws.Connect();
+            _logger.LogInformation("Starting client...");
+            await _client.Connect();
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            Console.WriteLine("[Playnite] Stopping client...");
-            await _ws.Disconnect();
+            _logger.LogInformation("Stopping client...");
+            await _client.Disconnect();
         }
     }
 }

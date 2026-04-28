@@ -4,6 +4,7 @@ using Hellbot.Core.Sessions;
 using Hellbot.Service.Audio;
 using Hellbot.Service.Clients.ElevenLabs;
 using Hellbot.Service.Clients.OBS;
+using Hellbot.Service.Clients.Playnite;
 using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Clients.Whisper;
 using Hellbot.Service.Commands;
@@ -62,6 +63,8 @@ builder.Services.AddOptions<ElevenLabsOptions>()
     .ValidateOnStart();
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database"));
 builder.Services.Configure<WhisperOptions>(builder.Configuration.GetSection("Whisper"));
+builder.Services.Configure<PlayniteOptions>(builder.Configuration.GetSection("Playnite"));
+
 
 // Database
 builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
@@ -100,6 +103,7 @@ builder.Services.AddSingleton<TwitchClient>();
 builder.Services.AddSingleton<OBSWebsocket>();
 builder.Services.AddSingleton<ObsClient>();
 builder.Services.AddSingleton<WhisperClient>();
+builder.Services.AddSingleton<PlayniteClient>();
 
 // Handlers
 builder.Services.Scan(scan => scan
