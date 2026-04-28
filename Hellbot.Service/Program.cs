@@ -101,7 +101,6 @@ builder.Services.AddSingleton<OBSWebsocket>();
 builder.Services.AddSingleton<ObsClient>();
 builder.Services.AddSingleton<WhisperClient>();
 
-
 // Handlers
 builder.Services.Scan(scan => scan
     .FromAssembliesOf(typeof(IEventHandler))
@@ -130,6 +129,7 @@ builder.Services.AddHostedService<TtsWorker>();
 builder.Services.AddHostedService<TwitchEventSubProducer>();
 builder.Services.AddHostedService<ObsEventProducer>();
 builder.Services.AddHostedService<MicCaptureService>();
+builder.Services.AddHostedService<PlayniteEventProducer>();
 
 builder.Services.AddSignalR();
 builder.Services.AddControllers();

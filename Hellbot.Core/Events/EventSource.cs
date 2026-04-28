@@ -7,6 +7,7 @@
         API,
         Twitch,
         Hellbot,
+        Playnite
     }
 
     public sealed record EventSource(PlatformSource Platform, string? Channel = null)
@@ -15,6 +16,7 @@
         public static readonly EventSource API = new(PlatformSource.API);
         public static readonly EventSource Twitch = new(PlatformSource.Twitch);
         public static readonly EventSource Internal = new(PlatformSource.Hellbot);
+        public static readonly EventSource Playnite = new(PlatformSource.Playnite);
 
 
         public override string ToString()
