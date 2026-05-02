@@ -1,16 +1,26 @@
-﻿using Hellbot.Core.Events.Session;
+﻿using Hellbot.Core.Events;
+using Hellbot.Core.Events.Session;
 using Hellbot.Service.Clients.Twitch;
 
 namespace Hellbot.Service.EventBus.Handlers.Session
 {
-    public class GameStartedHandler(TwitchClient twitch, ILogger<GameStartedHandler> logger) : EventHandlerBase<GameStarted>
+    public class GameStartedHandler(TwitchClient twitch, IEventBus bus, ILogger<GameStartedHandler> logger) : EventHandlerBase<GameStarted>
     {
         public override async Task Handle(GameStarted evt)
         {
-            // TODO: Make this fire a UpdateTitle and/or UpdateGame request
+            // TODO: Move Game name Resolution upstream
             var currentGame = evt.Data.Name;
             var twitchGame = await twitch.API.Games.GetGamesAsync(gameNames: [currentGame]);
-            await twitch.API.Channels.ModifyChannelInformationAsync("twitch.BroadcasterId", new() { GameId = twitchGame.Data[0].Id });
+
+            await bus.Publish(new UpdateChannel
+            {
+                Data = new UpdateChannelPayload
+                {
+                    GameId = twitchGame.Data[0].Name,
+                },
+                Source = EventSource.Internal with { Channel = "GameStartedHandler" }
+            });
+
             return;
         }
     }
