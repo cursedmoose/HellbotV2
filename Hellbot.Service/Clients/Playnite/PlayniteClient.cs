@@ -1,6 +1,7 @@
 ﻿using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
 using PlayniteWebsocket.Client;
+using System.Net.WebSockets;
 
 namespace Hellbot.Service.Clients.Playnite
 {
@@ -22,9 +23,14 @@ namespace Hellbot.Service.Clients.Playnite
                 _logger.LogInformation("Playnite Websocket Connected");
             };
 
-            _ws.Disconnected += () =>
+            _ws.Disconnected += async () =>
             {
-                _logger.LogInformation("Playnite Websocket Disconnected");
+                _logger.LogInformation("Playnite Websocket Disconnected. Attempting to reconnect..");
+                while (_ws.Status != WebSocketState.Open)
+                {
+                    await Connect();
+                    await Task.Delay(5000);
+                }
             };
         }
 
@@ -33,12 +39,12 @@ namespace Hellbot.Service.Clients.Playnite
 
         public Task StartGame(Guid gameId)
         {
-            return _ws.SendCommand("StartGame", new { gameId });
+            return _ws.GetGameInfo(gameId);
         }
 
         public Task StopGame(Guid gameId)
         {
-            return _ws.SendCommand("StopGame", new { gameId });
+            return _ws.GetGameInfo(gameId);
         }
     }
 }

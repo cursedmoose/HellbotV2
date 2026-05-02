@@ -20,13 +20,13 @@ namespace Hellbot.Service.EventBus.Producers
 
             _playnite.GameStarted += evt =>
             {
-                _logger.LogInformation("Started: {Game}", evt.Data.GameName);
+                _logger.LogInformation("Started: {Game}", evt.GameName);
                 _bus.Publish(new GameStarted
                 {
                     Data = new GameStartedPayload
                     {
-                        Id = evt.Data.GameId,
-                        Name = evt.Data.GameName 
+                        Id = evt.GameId,
+                        Name = evt.GameName 
                     },
                     Source = EventSource.Playnite
                 });
@@ -34,13 +34,13 @@ namespace Hellbot.Service.EventBus.Producers
 
             _playnite.GameStopped += evt =>
             {
-                _logger.LogInformation("Stopped: {Game}", evt.Data.GameName);
+                _logger.LogInformation("Stopped: {Game}", evt.GameName);
                 _bus.Publish(new GameStopped
                 {
                     Data = new GameStoppedPayload
                     {
-                        Id = evt.Data.GameId,
-                        Name = evt.Data.GameName
+                        Id = evt.GameId,
+                        Name = evt.GameName
                     },
                     Source = EventSource.Playnite
                 });
