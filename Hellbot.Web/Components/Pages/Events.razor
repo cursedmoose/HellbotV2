@@ -1,63 +1,120 @@
 ﻿@page "/events"
+@using Hellbot.UI.Components.Extensions
+@using Hellbot.UI.Components.Model
 @using Microsoft.AspNetCore.SignalR.Client
-@using System.Text.Json;
+@using System.Text.Json
 @rendermode InteractiveServer
 
 <h3>Live Events</h3>
 
-<!-- Filter by event type -->
-<div>
-    <label for="eventTypeFilter">Filter by Event Type: </label>
-    <select id="eventTypeFilter" @onchange="HandleEventTypeChange">
-        <option value="">All</option>
-        @foreach (var type in uniqueEventTypes)
-        {
-            <option value="@type">@type</option>
-        }
-    </select>
+<!-- FILTERS -->
+<div style="margin-bottom:10px;">
+    <b>Filter:</b>
+
+    @foreach (var type in uniqueEventTypes.OrderBy(x => x))
+    {
+        <label style="margin-right:10px;">
+            <input type="checkbox"
+                   checked="@selectedTypes.Contains(type)"
+                   @onchange="e => ToggleType(type, (bool)e.Value!)" />
+            @type
+        </label>
+    }
 </div>
 
-<!-- Event list -->
-<ul>
-    @foreach (var evt in filteredEvents)
-    {
-        <li @key="evt.Id">
-            <b style="color:@GetColor(evt.Type)">@evt.Type</b> - @evt.Timestamp
+<!-- TABLE -->
+<table class="table table-sm table-striped">
+    <thead>
+        <tr>
+            <th></th>
 
-            <button style="margin-left:10px;"
-                    @onclick="() => ToggleDetails(evt.Id)">
-                @(expanded.Contains(evt.Id) ? "Hide Details" : "Show Details")
-            </button>
+            <th style="cursor:pointer;" @onclick="() => SortBy(nameof(EventViewModel.Type))">
+                Type @(sortColumn == nameof(EventViewModel.Type) ? (sortAsc ? "↑" : "↓") : "")
+            </th>
+
+            <th style="cursor:pointer;" @onclick="() => SortBy(nameof(EventViewModel.Timestamp))">
+                Timestamp @(sortColumn == nameof(EventViewModel.Timestamp) ? (sortAsc ? "↑" : "↓") : "")
+            </th>
+
+            <th>Id</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var evt in ProcessedEvents)
+        {
+            <tr @key="evt.Id">
+                <td>
+                    <button @onclick="() => ToggleDetails(evt.Id)">
+                        @(expanded.Contains(evt.Id) ? "−" : "+")
+                    </button>
+                </td>
+
+                <td style="color:@GetColor(evt.Type)">
+                    @evt.Type
+                </td>
+
+                <td>
+                    @evt.Timestamp.ToLocalTime().ToString("HH:mm:ss.fff")
+                </td>
+
+                <td style="font-size:0.75em; opacity:0.8;">
+                    @evt.Id
+                </td>
+            </tr>
 
             @if (expanded.Contains(evt.Id))
             {
-                <pre>@evt.Data.ToString()</pre>
+                <tr @key="@(evt.Id + "-details")">
+                    <td colspan="4">
+                        <pre style="background:#111;color:#0f0;padding:10px;overflow:auto;">
+@evt.Data.ToString()
+                        </pre>
+                    </td>
+                </tr>
             }
-        </li>
-    }
-</ul>
+        }
+    </tbody>
+</table>
 
 @code {
+
+    // =========================
+    // STATE
+    // =========================
+
     private List<EventViewModel> events = new();
-    private List<string> uniqueEventTypes = new();
     private HashSet<Guid> expanded = new();
-    private string? selectedEventType;
+    private HashSet<string> selectedTypes = new();
+    private List<string> uniqueEventTypes = new();
+
+    private string sortColumn = nameof(EventViewModel.Timestamp);
+    private bool sortAsc = false;
 
     private HubConnection? hubConnection;
+
+    // =========================
+    // INIT
+    // =========================
 
     protected override async Task OnInitializedAsync()
     {
         hubConnection = new HubConnectionBuilder()
-            .WithUrl("http://localhost:5131/eventsHub") // backend URL
+            .WithUrl("http://localhost:5131/eventsHub")
             .WithAutomaticReconnect()
             .Build();
 
         hubConnection.On<EventViewModel>("ReceiveEvent", evt =>
         {
+            if (evt.Id == Guid.Empty)
+                evt.Id = Guid.NewGuid();
+
             events.Insert(0, evt);
+
             if (!uniqueEventTypes.Contains(evt.Type))
             {
                 uniqueEventTypes.Add(evt.Type);
+                selectedTypes.Add(evt.Type); // auto-enable new types
             }
 
             if (events.Count > 100)
@@ -69,39 +126,52 @@
         await hubConnection.StartAsync();
     }
 
-    private string GetColor(string eventType)
-    {
-        switch (eventType)
-        {
-            case "Test":
-                return "yellow";
-            default:
-                return "black";
-        }
-    }
+    // =========================
+    // FILTERED + SORTED DATA
+    // =========================
 
-    public class EventViewModel
-    {
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public string Type { get; set; } = "";
-        public DateTimeOffset Timestamp { get; set; }
-        public JsonElement Data { get; set; }
-    }
+    private IEnumerable<EventViewModel> ProcessedEvents =>
+        events
+            .Where(e => selectedTypes.Count == 0 || selectedTypes.Contains(e.Type))
+            .OrderByDynamic(sortColumn, sortAsc);
+
+    // =========================
+    // UI ACTIONS
+    // =========================
 
     private void ToggleDetails(Guid id)
     {
         if (!expanded.Add(id))
-        {
             expanded.Remove(id);
+    }
+
+    private void ToggleType(string type, bool enabled)
+    {
+        if (enabled)
+            selectedTypes.Add(type);
+        else
+            selectedTypes.Remove(type);
+    }
+
+    private void SortBy(string column)
+    {
+        if (sortColumn == column)
+            sortAsc = !sortAsc;
+        else
+        {
+            sortColumn = column;
+            sortAsc = true;
         }
     }
 
-    private List<EventViewModel> filteredEvents => string.IsNullOrEmpty(selectedEventType)
-        ? events
-        : events.Where(evt => evt.Type == selectedEventType).ToList();
-
-    private void HandleEventTypeChange(ChangeEventArgs e)
+    private string GetColor(string eventType)
     {
-        selectedEventType = e.Value?.ToString();
+        return eventType switch
+        {
+            "Test" => "yellow",
+            "Error" => "red",
+            "Warning" => "orange",
+            _ => "black"
+        };
     }
 }
