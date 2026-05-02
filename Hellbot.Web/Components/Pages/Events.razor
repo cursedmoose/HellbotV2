@@ -5,19 +5,43 @@
 
 <h3>Live Events</h3>
 
+<!-- Filter by event type -->
+<div>
+    <label for="eventTypeFilter">Filter by Event Type: </label>
+    <select id="eventTypeFilter" @onchange="HandleEventTypeChange">
+        <option value="">All</option>
+        @foreach (var type in uniqueEventTypes)
+        {
+            <option value="@type">@type</option>
+        }
+    </select>
+</div>
+
+<!-- Event list -->
 <ul>
-    @foreach (var evt in events)
+    @foreach (var evt in filteredEvents)
     {
-        <li>
+        <li @key="evt.Id">
             <b style="color:@GetColor(evt.Type)">@evt.Type</b> - @evt.Timestamp
-            <pre>@evt.Data.ToString()</pre>
+
+            <button style="margin-left:10px;"
+                    @onclick="() => ToggleDetails(evt.Id)">
+                @(expanded.Contains(evt.Id) ? "Hide Details" : "Show Details")
+            </button>
+
+            @if (expanded.Contains(evt.Id))
+            {
+                <pre>@evt.Data.ToString()</pre>
+            }
         </li>
     }
 </ul>
 
 @code {
-
     private List<EventViewModel> events = new();
+    private List<string> uniqueEventTypes = new();
+    private HashSet<Guid> expanded = new();
+    private string? selectedEventType;
 
     private HubConnection? hubConnection;
 
@@ -31,6 +55,10 @@
         hubConnection.On<EventViewModel>("ReceiveEvent", evt =>
         {
             events.Insert(0, evt);
+            if (!uniqueEventTypes.Contains(evt.Type))
+            {
+                uniqueEventTypes.Add(evt.Type);
+            }
 
             if (events.Count > 100)
                 events.RemoveAt(events.Count - 1);
@@ -54,8 +82,26 @@
 
     public class EventViewModel
     {
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Type { get; set; } = "";
         public DateTimeOffset Timestamp { get; set; }
         public JsonElement Data { get; set; }
+    }
+
+    private void ToggleDetails(Guid id)
+    {
+        if (!expanded.Add(id))
+        {
+            expanded.Remove(id);
+        }
+    }
+
+    private List<EventViewModel> filteredEvents => string.IsNullOrEmpty(selectedEventType)
+        ? events
+        : events.Where(evt => evt.Type == selectedEventType).ToList();
+
+    private void HandleEventTypeChange(ChangeEventArgs e)
+    {
+        selectedEventType = e.Value?.ToString();
     }
 }

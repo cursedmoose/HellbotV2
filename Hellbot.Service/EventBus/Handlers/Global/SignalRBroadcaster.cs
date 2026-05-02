@@ -17,6 +17,7 @@ namespace Hellbot.Service.EventBus.Handlers.Global
 
             var envelope = new
             {
+                id = evt.Id,
                 type = evt.GetType().Name,
                 timestamp = evt.Timestamp,
                 data = JsonSerializer.SerializeToElement(dataValue, dataValue.GetType())
