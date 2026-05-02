@@ -1,6 +1,6 @@
-﻿using Hellbot.Core.Commands;
-using Hellbot.Core.Events;
+﻿using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
+using Hellbot.Core.Events.Session;
 using Hellbot.Core.Events.Users;
 using Hellbot.Core.Users;
 using Hellbot.Service.Clients.Twitch;
@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using TwitchLib.Api.Core.Enums;
 using TwitchLib.Api.Helix.Models.EventSub;
 using TwitchLib.EventSub.Core.EventArgs.Channel;
+using TwitchLib.EventSub.Core.EventArgs.Stream;
 using TwitchLib.EventSub.Websockets;
 using TwitchLib.EventSub.Websockets.Core.EventArgs;
 
@@ -56,6 +57,9 @@ namespace Hellbot.Service.EventBus.Producers
             // Moderation Hooks
             _eventSubWebsocketClient.ChannelBan += OnChannelBan;
             _eventSubWebsocketClient.ChannelUnban += OnChannelUnban;
+
+            _eventSubWebsocketClient.StreamOnline += OnStreamOnline;
+            _eventSubWebsocketClient.StreamOffline += OnStreamOffline;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -248,6 +252,28 @@ namespace Hellbot.Service.EventBus.Producers
                     UserId = e.Payload.Event.UserId
                 },
                 Source = EventSource.Twitch,
+            };
+
+            await _bus.Publish(hellbotEvent);
+        }
+
+        private async Task OnStreamOnline(object? sender, StreamOnlineArgs e)
+        {
+            var hellbotEvent = new StreamStarted
+            {
+                Data = new(),
+                Source = EventSource.Twitch
+            };
+
+            await _bus.Publish(hellbotEvent);
+        }
+
+        private async Task OnStreamOffline(object? sender, StreamOfflineArgs e)
+        {
+            var hellbotEvent = new StreamStopped
+            {
+                Data = new(),
+                Source = EventSource.Twitch
             };
 
             await _bus.Publish(hellbotEvent);
