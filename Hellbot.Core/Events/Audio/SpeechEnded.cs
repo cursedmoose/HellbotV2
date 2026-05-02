@@ -4,7 +4,7 @@
 
     public record SpeechEndedPayload
     {
-        public required TimeSpan Duration;
+        public required TimeSpan Duration { get; init; }
     }
 
 }

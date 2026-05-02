@@ -3,10 +3,10 @@
 
     public record UserBannedPayload
     {
-        public required string UserId;
-        public required string Reason;
-        public required DateTimeOffset BannedAt;
-        public required bool IsPermanent;
+        public required string UserId { get; init; }
+        public required string Reason { get; init; }
+        public required DateTimeOffset BannedAt { get; init; }
+        public required bool IsPermanent { get; init; }
     };
     public record UserBanned : HellbotEvent<UserBannedPayload>;
 }

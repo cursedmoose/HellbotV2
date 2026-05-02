@@ -9,6 +9,6 @@
 
     public record TestPayload()
     {
-        public required string Message;
+        public required string Message { get; init; }
     }
 }

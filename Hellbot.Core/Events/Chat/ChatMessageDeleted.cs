@@ -4,6 +4,6 @@
 
     public record ChatDeletedPayload
     {
-        public required string MessageId;
+        public required string MessageId { get; init; }
     };
 }

@@ -1,5 +1,6 @@
 ﻿using Hellbot.Core.Events;
 using Microsoft.AspNetCore.SignalR;
+using System.Text.Json;
 
 namespace Hellbot.Service.EventBus.Handlers.Global
 {
@@ -9,12 +10,19 @@ namespace Hellbot.Service.EventBus.Handlers.Global
 
         public Task Handle(IHellbotEvent evt)
         {
-            return hubContext.Clients.All.SendAsync("ReceiveEvent", new
+            var eventType = evt.GetType();
+
+            var dataProperty = eventType.GetProperty("Data");
+            var dataValue = dataProperty?.GetValue(evt);
+
+            var envelope = new
             {
                 type = evt.GetType().Name,
                 timestamp = evt.Timestamp,
-                data = evt
-            });
+                data = JsonSerializer.SerializeToElement(dataValue, dataValue.GetType())
+            };
+
+            return hubContext.Clients.All.SendAsync("ReceiveEvent", envelope);
         }
     }
 }

@@ -10,7 +10,7 @@
     {
         <li>
             <b style="color:@GetColor(evt.Type)">@evt.Type</b> - @evt.Timestamp
-            <pre>@JsonSerializer.Serialize(value: evt.Data, options: new() { WriteIndented = true })</pre>
+            <pre>@evt.Data.ToString()</pre>
         </li>
     }
 </ul>
@@ -24,7 +24,7 @@
     protected override async Task OnInitializedAsync()
     {
         hubConnection = new HubConnectionBuilder()
-            .WithUrl("http://localhost:5130/eventsHub") // backend URL
+            .WithUrl("http://localhost:5131/eventsHub") // backend URL
             .WithAutomaticReconnect()
             .Build();
 
@@ -55,7 +55,7 @@
     public class EventViewModel
     {
         public string Type { get; set; } = "";
-        public DateTime Timestamp { get; set; }
-        public object Data { get; set; } = default!;
+        public DateTimeOffset Timestamp { get; set; }
+        public JsonElement Data { get; set; }
     }
 }

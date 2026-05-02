@@ -2,9 +2,9 @@
 {
     public record VoiceTranscriptionPayload
     {
-        public required string Text;
-        public required DateTimeOffset Start;
-        public required DateTimeOffset End;
+        public required string Text { get; init; }
+        public required DateTimeOffset Start { get; init; }
+        public required DateTimeOffset End { get; init; }
     }
     public record VoiceTranscriptionCompleted : HellbotEvent<VoiceTranscriptionPayload>;
 }
