@@ -22,60 +22,67 @@
     }
 </div>
 
-<!-- TABLE -->
-<table class="table table-sm table-striped">
-    <thead>
-        <tr>
-            <th></th>
+<MudPaper Class="pa-3">
 
-            <th style="cursor:pointer;" @onclick="() => SortBy(nameof(EventViewModel.Type))">
+    <MudTable Items="ProcessedEvents"
+              Dense="true"
+              Hover="true"
+              Striped="true"
+              Bordered="false"
+              @key="events.Count">
+
+        <HeaderContent>
+            <MudTh></MudTh>
+
+            <MudTh Style="cursor:pointer" @onclick="() => SortBy(nameof(EventViewModel.Type))">
                 Type @(sortColumn == nameof(EventViewModel.Type) ? (sortAsc ? "↑" : "↓") : "")
-            </th>
+            </MudTh>
 
-            <th style="cursor:pointer;" @onclick="() => SortBy(nameof(EventViewModel.Timestamp))">
+            <MudTh Style="cursor:pointer" @onclick="() => SortBy(nameof(EventViewModel.Timestamp))">
                 Timestamp @(sortColumn == nameof(EventViewModel.Timestamp) ? (sortAsc ? "↑" : "↓") : "")
-            </th>
+            </MudTh>
 
-            <th>Id</th>
-        </tr>
-    </thead>
+            <MudTh>Id</MudTh>
+        </HeaderContent>
 
-    <tbody>
-        @foreach (var evt in ProcessedEvents)
-        {
-            <tr @key="evt.Id">
-                <td>
-                    <button @onclick="() => ToggleDetails(evt.Id)">
-                        @(expanded.Contains(evt.Id) ? "−" : "+")
-                    </button>
-                </td>
+        <RowTemplate Context="evt">
+            <MudTd>
+                <MudIconButton Size="Size.Small"
+                               Icon="@(expanded.Contains(evt.Id)
+                                                                                   ? Icons.Material.Filled.Remove
+                                                                                   : Icons.Material.Filled.Add)"
+                               OnClick="@(() => ToggleDetails(evt.Id))" />
+            </MudTd>
 
-                <td style="color:@GetColor(evt.Type)">
-                    @evt.Type
-                </td>
+            <MudTd Style="@($"color:{GetColor(evt.Type)}")">
+                @evt.Type
+            </MudTd>
 
-                <td>
-                    @evt.Timestamp.ToLocalTime().ToString("HH:mm:ss.fff")
-                </td>
+            <MudTd>
+                @evt.Timestamp.ToLocalTime().ToString("HH:mm:ss.fff")
+            </MudTd>
 
-                <td style="font-size:0.75em; opacity:0.8;">
-                    @evt.Id
-                </td>
-            </tr>
+            <MudTd Style="font-size:0.75em; opacity:0.8;">
+                @evt.Id
+            </MudTd>
+        </RowTemplate>
 
+        <ChildRowContent Context="evt">
             @if (expanded.Contains(evt.Id))
             {
-                <tr @key="@(evt.Id + "-details")">
-                    <td colspan="4">
-                        <pre style="background:#111;color:#0f0;padding:10px;overflow:auto;">
-@evt.Data.ToString()
-                        </pre>
-                    </td>
-                </tr>
+                <MudTr>
+                    <MudTd ColSpan="4">
+                        <MudPaper Class="pa-2" Style="background:#111;color:#0f0;overflow:auto;">
+                            <pre>@evt.Data.ToString()</pre>
+                        </MudPaper>
+                    </MudTd>
+                </MudTr>
             }
-        }
-    </tbody>
-</table>
+        </ChildRowContent>
+
+    </MudTable>
+
+</MudPaper>
 
 @code {
 
