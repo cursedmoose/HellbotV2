@@ -54,7 +54,7 @@
                                OnClick="@(() => ToggleDetails(evt.Id))" />
             </MudTd>
 
-            <MudTd Style="@($"color:{GetColor(evt.Type)}")">
+            <MudTd>
                 @evt.Type
             </MudTd>
 
@@ -72,9 +72,9 @@
             {
                 <MudTr>
                     <MudTd ColSpan="4">
-                        <MudPaper Class="pa-2" Style="background:#111;color:#0f0;overflow:auto;">
-                            <pre>@evt.Data.ToString()</pre>
-                        </MudPaper>
+                        <MudText Typo="Typo.body2" Style="white-space:pre-wrap; word-break:break-word;">
+                            @FormatEventData(evt.Data)
+                        </MudText>
                     </MudTd>
                 </MudTr>
             }
@@ -171,14 +171,19 @@
         }
     }
 
-    private string GetColor(string eventType)
+    private string FormatEventData(object data)
     {
-        return eventType switch
-        {
-            "Test" => "yellow",
-            "Error" => "red",
-            "Warning" => "orange",
-            _ => "black"
-        };
+        if (data is null)
+            return "<null>";
+
+        // If it's already a JSON element, pretty print it
+        if (data is System.Text.Json.JsonElement json)
+            return JsonSerializer.Serialize(json, new JsonSerializerOptions { 
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+
+        // fallback
+        return data.ToString() ?? "<empty>";
     }
 }
