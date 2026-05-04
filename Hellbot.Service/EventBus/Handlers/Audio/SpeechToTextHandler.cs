@@ -18,7 +18,7 @@ namespace Hellbot.Service.EventBus.Handlers.Audio
             var text = await whisper.TranscribeAsync(wavStream);
 
             logger.LogInformation("Text transcribed: {Text}", text);
-            if (text == "[BLANK_AUDIO]" || text is null)
+            if (text is null || text.Trim() == "[BLANK_AUDIO]")
             {
                 return;
             }

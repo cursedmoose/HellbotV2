@@ -24,7 +24,7 @@ namespace Hellbot.Service.Audio
                 DeviceNumber = 0,
                 WaveFormat = new WaveFormat(16000, 1)
             };
-            logger.LogInformation("Device WaveFormat: {Format}", _waveIn.WaveFormat);
+            logger.LogDebug("Device WaveFormat: {Format}", _waveIn.WaveFormat);
 
             _waveIn.DataAvailable += OnDataAvailable;
             _waveIn.RecordingStopped += OnRecordingStopped;
@@ -150,7 +150,7 @@ namespace Hellbot.Service.Audio
             for (int i = 0; i < WaveInEvent.DeviceCount; i++)
             {
                 var caps = WaveInEvent.GetCapabilities(i);
-                logger.LogInformation("Input Device {Index}: {Name}", i, caps.ProductName);
+                logger.LogDebug("Input Device {Index}: {Name}", i, caps.ProductName);
             }
         }
     }

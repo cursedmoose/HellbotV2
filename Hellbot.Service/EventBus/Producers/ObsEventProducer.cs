@@ -11,7 +11,7 @@ namespace Hellbot.Service.EventBus.Producers
             obs.Start();
 
             obs.API.Connected += (o, s) => PublishWebsocketStatus(ConnectionState.Connected, null);
-            obs.API.Disconnected += (o, s) => PublishWebsocketStatus(ConnectionState.Disconnected, null);
+            obs.API.Disconnected += (o, s) => PublishWebsocketStatus(ConnectionState.Disconnected, s.DisconnectReason);
 
             return Task.CompletedTask;
         }

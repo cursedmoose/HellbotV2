@@ -53,7 +53,9 @@ namespace Hellbot.Service.Clients.Twitch
             var resp = await Auth.GetAccessTokenFromCodeAsync(auth?.Code, _options.API.ClientSecret, _options.API.RedirectUrl);
             _api.Settings.AccessToken = resp.AccessToken;
             var user = (await API.Users.GetUsersAsync()).Users[0];
-            _logger.LogInformation("Authorization success!\n\nUser={UserName}({UserId})\nScopes=[{Scopes}]", user.DisplayName, user.Id, string.Join(", ", resp.Scopes));
+            _logger.LogInformation("Authorization success!");
+            _logger.LogDebug("User={UserName}({UserId})", user.DisplayName, user.Id);
+            _logger.LogDebug("Scopes=[{Scopes}]", string.Join(", ", resp.Scopes));
         }
 
         private static void OpenBrowser(string url)

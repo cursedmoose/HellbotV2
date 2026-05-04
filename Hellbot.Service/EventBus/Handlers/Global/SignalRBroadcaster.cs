@@ -13,7 +13,7 @@ namespace Hellbot.Service.EventBus.Handlers.Global
             var eventType = evt.GetType();
 
             var dataProperty = eventType.GetProperty("Data");
-            var dataValue = dataProperty?.GetValue(evt);
+            var dataValue = dataProperty?.GetValue(evt)!;
 
             var envelope = new
             {
