@@ -99,6 +99,8 @@ namespace Hellbot.Service.EventBus.Producers
                 await SubscribeTo("stream.online", "1", [BROADCASTER_ID]);
                 await SubscribeTo("stream.offline", "1", [BROADCASTER_ID]);
             }
+
+            await PublishWebsocketStatus(ConnectionState.Connected, _eventSubWebsocketClient.SessionId);
         }
 
         private async Task<CreateEventSubSubscriptionResponse> SubscribeTo(string type, string version, List<string> conditions)
@@ -123,6 +125,7 @@ namespace Hellbot.Service.EventBus.Producers
         private async Task OnWebsocketDisconnected(object? sender, WebsocketDisconnectedArgs e)
         {
             _logger.LogError("Websocket {SessionId} disconnected!", _eventSubWebsocketClient.SessionId);
+            await PublishWebsocketStatus(ConnectionState.Disconnected, _eventSubWebsocketClient.SessionId);
 
             while (!await _eventSubWebsocketClient.ReconnectAsync())
             {
@@ -134,6 +137,19 @@ namespace Hellbot.Service.EventBus.Producers
         private async Task OnWebsocketReconnected(object? sender, WebsocketReconnectedArgs e)
         {
             _logger.LogWarning("Websocket {SessionId} reconnected", _eventSubWebsocketClient.SessionId);
+        }
+
+        private Task PublishWebsocketStatus(ConnectionState state, string? details)
+        {
+            return _bus.Publish(new WebsocketStateChanged
+            {
+                Data = new()
+                {
+                    Status = state,
+                    Details = details
+                },
+                Source = EventSource.Twitch
+            });
         }
 
         private async Task OnErrorOccurred(object? sender, ErrorOccuredArgs e)

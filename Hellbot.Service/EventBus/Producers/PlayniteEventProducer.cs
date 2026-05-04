@@ -45,6 +45,9 @@ namespace Hellbot.Service.EventBus.Producers
                     Source = EventSource.Playnite
                 });
             };
+
+            _playnite.Connected += () => PublishWebsocketStatus(ConnectionState.Connected, null);
+            _playnite.Disconnected += () => PublishWebsocketStatus(ConnectionState.Disconnected, null);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -57,6 +60,19 @@ namespace Hellbot.Service.EventBus.Producers
         {
             _logger.LogInformation("Stopping client...");
             await _client.Disconnect();
+        }
+
+        private Task PublishWebsocketStatus(ConnectionState state, string? details)
+        {
+            return _bus.Publish(new WebsocketStateChanged
+            {
+                Data = new()
+                {
+                    Status = state,
+                    Details = details
+                },
+                Source = EventSource.Playnite
+            });
         }
     }
 }
