@@ -137,6 +137,7 @@ namespace Hellbot.Service.EventBus.Producers
         private async Task OnWebsocketReconnected(object? sender, WebsocketReconnectedArgs e)
         {
             _logger.LogWarning("Websocket {SessionId} reconnected", _eventSubWebsocketClient.SessionId);
+            await PublishWebsocketStatus(ConnectionState.Connected, _eventSubWebsocketClient.SessionId);
         }
 
         private Task PublishWebsocketStatus(ConnectionState state, string? details)

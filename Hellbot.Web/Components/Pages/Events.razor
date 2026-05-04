@@ -1,8 +1,11 @@
 ﻿@page "/events"
 @using Hellbot.UI.Components.Extensions
 @using Hellbot.UI.Components.Model
+@using Hellbot.UI.Configuration
 @using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.Extensions.Options
 @using System.Text.Json
+@inject IOptions<HellbotApiOptions> ApiOptions
 @rendermode InteractiveServer
 
 <h3>Live Events</h3>
@@ -106,8 +109,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var hubUrl = $"{ApiOptions.Value.BaseUrl.TrimEnd('/')}/eventsHub";
         hubConnection = new HubConnectionBuilder()
-            .WithUrl("http://localhost:5131/eventsHub")
+            .WithUrl(hubUrl)
             .WithAutomaticReconnect()
             .Build();
 

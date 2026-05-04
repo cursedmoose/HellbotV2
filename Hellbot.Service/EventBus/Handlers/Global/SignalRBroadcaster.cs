@@ -20,6 +20,7 @@ namespace Hellbot.Service.EventBus.Handlers.Global
                 id = evt.Id,
                 type = evt.GetType().Name,
                 timestamp = evt.Timestamp,
+                source = new { platform = evt.Source.Platform, channel = evt.Source.Channel },
                 data = JsonSerializer.SerializeToElement(dataValue, dataValue.GetType())
             };
 

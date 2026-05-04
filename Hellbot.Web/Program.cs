@@ -1,4 +1,6 @@
 using Hellbot.UI.Components;
+using Hellbot.UI.Configuration;
+using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,9 +11,14 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 
-builder.Services.AddHttpClient("api", client =>
-    client.BaseAddress = new Uri("http://localhost:5131")
-);
+builder.Services.Configure<HellbotApiOptions>(
+    builder.Configuration.GetSection(HellbotApiOptions.SectionName));
+
+builder.Services.AddHttpClient("api", (sp, client) =>
+{
+    var baseUrl = sp.GetRequiredService<IOptions<HellbotApiOptions>>().Value.BaseUrl.TrimEnd('/') + "/";
+    client.BaseAddress = new Uri(baseUrl);
+});
 
 var app = builder.Build();
 

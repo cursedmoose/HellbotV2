@@ -14,6 +14,7 @@ using Hellbot.Service.Data.Migrations;
 using Hellbot.Service.Data.Tables;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
+using Hellbot.Service.Status;
 using Hellbot.Service.EventBus.Middleware;
 using Hellbot.Service.EventBus.Producers;
 using Hellbot.Service.Tts;
@@ -90,6 +91,7 @@ builder.Services.AddFluentMigratorCore()
 builder.Services.AddHostedService<Hellbot.Service.Data.MigrationRunner>();
 
 // Event Bus
+builder.Services.AddSingleton<ServiceStatusProvider>();
 builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
 builder.Services.AddSingleton<ITtsPlaybackGate, TtsPlaybackGate>();
 builder.Services.AddSingleton<ITtsQueue, TtsQueue>();
@@ -136,7 +138,9 @@ builder.Services.AddHostedService<MicCaptureService>();
 builder.Services.AddHostedService<PlayniteEventProducer>();
 
 builder.Services.AddSignalR();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+        o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
