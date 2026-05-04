@@ -43,6 +43,27 @@ namespace Hellbot.Service.Clients.OBS
         private void OnDisconnect(object? sender, ObsDisconnectionInfo e)
         {
             _logger.LogInformation("OBS Websocket disconnected due to {Reason}.", e.DisconnectReason ?? "OBS is not running.");
+            _ = ReconnectLoopAsync();
+        }
+
+        private async Task ReconnectLoopAsync()
+        {
+            while (!API.IsConnected)
+            {
+                try
+                {
+                    API.ConnectAsync(_options.WebsocketUrl, "");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "OBS reconnect attempt failed.");
+                }
+
+                if (API.IsConnected)
+                    break;
+
+                await Task.Delay(3000);
+            }
         }
 
         public void EnableScene(string? sceneId)

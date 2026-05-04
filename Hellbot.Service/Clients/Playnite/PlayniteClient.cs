@@ -25,11 +25,22 @@ namespace Hellbot.Service.Clients.Playnite
 
             _ws.Disconnected += async () =>
             {
-                _logger.LogInformation("Playnite Websocket Disconnected. Attempting to reconnect..");
+                _logger.LogInformation("Playnite Websocket disconnected.");
                 while (_ws.Status != WebSocketState.Open)
                 {
-                    await Connect();
-                    await Task.Delay(5000);
+                    try
+                    {
+                        await _ws.Connect();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Playnite reconnect attempt failed.");
+                    }
+
+                    if (_ws.Status == WebSocketState.Open)
+                        break;
+
+                    await Task.Delay(3000);
                 }
             };
         }
