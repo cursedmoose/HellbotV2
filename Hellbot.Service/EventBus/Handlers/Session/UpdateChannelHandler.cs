@@ -1,17 +1,11 @@
 ﻿using Hellbot.Core.Events.Session;
-using Hellbot.Service.Clients.Twitch;
+using Hellbot.Service.Sessions;
 
 namespace Hellbot.Service.EventBus.Handlers.Session
 {
-    public class UpdateChannelHandler(TwitchClient twitch, ILogger<UpdateChannelHandler> logger) : EventHandlerBase<UpdateChannel>
+    public class UpdateChannelHandler(IStreamSessionManager sessions) : EventHandlerBase<UpdateChannel>
     {
-        public override async Task Handle(UpdateChannel evt)
-        {
-            await twitch.API.Channels.ModifyChannelInformationAsync("twitch.BroadcasterId", new() { 
-                GameId = evt.Data.GameId,
-                Title = evt.Data.Title
-            });
-            return;
-        }
+        public override Task Handle(UpdateChannel evt) =>
+            sessions.UpdateChannelAsync(evt.Data.GameId, evt.Data.Title);
     }
 }

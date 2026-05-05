@@ -76,5 +76,18 @@ namespace Hellbot.Service.Clients.Twitch
                 Message = message
             });
         }
+
+        public Task ModifyChannelInformationAsync(string? gameId, string? title)
+        {
+            var broadcasterId = string.IsNullOrEmpty(_options.BroadcasterId)
+                ? _options.ChannelId
+                : _options.BroadcasterId;
+
+            return API.Channels.ModifyChannelInformationAsync(broadcasterId, new()
+            {
+                GameId = gameId,
+                Title = title
+            });
+        }
     }
 }

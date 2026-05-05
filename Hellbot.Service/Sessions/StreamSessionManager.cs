@@ -1,11 +1,12 @@
 using Hellbot.Core.Events;
 using Hellbot.Core.Sessions;
+using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
 
 namespace Hellbot.Service.Sessions
 {
-    public class StreamSessionManager(IOptions<StreamSessionOptions> options) : IStreamSessionManager
+    public class StreamSessionManager(IOptions<StreamSessionOptions> options, TwitchClient twitch) : IStreamSessionManager
     {
         private readonly Lock _lock = new();
         private StreamSession? _currentSession;
@@ -17,6 +18,22 @@ namespace Hellbot.Service.Sessions
         public StreamSessionSnapshot? CurrentStreamSnapshot => _streamSnapshot;
 
         public StreamSession? GetCurrentSession() => _currentSession;
+
+        public async Task UpdateChannelAsync(string? gameId, string? title)
+        {
+            await twitch.ModifyChannelInformationAsync(gameId, title);
+
+            lock (_lock)
+            {
+                if (_currentSession is not { IsActive: true })
+                    return;
+
+                if (!string.IsNullOrEmpty(title))
+                    _currentSession.Metadata = _currentSession.Metadata with { Title = title };
+
+                RefreshSnapshot();
+            }
+        }
 
         public StreamSession StartOrAddDestination(StreamSessionStartInfo info)
         {

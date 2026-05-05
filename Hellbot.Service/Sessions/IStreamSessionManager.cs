@@ -13,5 +13,7 @@ namespace Hellbot.Service.Sessions
         bool RemoveDestination(StreamSessionStopInfo info, DateTimeOffset stoppedAt, out StreamSession? endedSession);
 
         StreamSession? GetCurrentSession();
+
+        Task UpdateChannelAsync(string? gameId, string? title);
     }
 }
