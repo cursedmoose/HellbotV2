@@ -1,13 +1,21 @@
 ﻿using Hellbot.Core.Events;
-using Hellbot.Core.Sessions;
-
+using Hellbot.Core.Events.Session;
+using Hellbot.Service.Sessions;
 namespace Hellbot.Service.EventBus.Middleware
 {
-    public class StreamSessionContextEnricher(IStreamSessionManager sessionManager): IEventMiddleware
+    public class StreamSessionContextEnricher(IStreamSessionManager sessionManager) : IEventMiddleware
     {
-        public async Task Invoke(IHellbotEvent evt)
+        public Task Invoke(IHellbotEvent evt)
         {
+            if (evt is StreamStarted)
+                return Task.CompletedTask;
+
             evt.StreamId = sessionManager.CurrentSessionId;
+            var snapshot = sessionManager.CurrentStreamSnapshot;
+            if (snapshot != null)
+                evt.Context = evt.Context with { Stream = snapshot };
+
+            return Task.CompletedTask;
         }
     }
 }

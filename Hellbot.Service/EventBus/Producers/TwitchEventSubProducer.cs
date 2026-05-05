@@ -3,6 +3,7 @@ using Hellbot.Core.Events.Chat;
 using Hellbot.Core.Events.Session;
 using Hellbot.Core.Events.Users;
 using Hellbot.Core.Users;
+using Hellbot.Core.Sessions;
 using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
@@ -276,9 +277,25 @@ namespace Hellbot.Service.EventBus.Producers
 
         private async Task OnStreamOnline(object? sender, StreamOnlineArgs e)
         {
+            var online = e.Payload.Event;
+            var broadcasterId = online.BroadcasterUserId;
+            var meta = await FetchTwitchStreamMetadataAsync(broadcasterId).ConfigureAwait(false)
+                       ?? new StreamMetadata();
+
+            var startedAt = online.StartedAt;
+
             var hellbotEvent = new StreamStarted
             {
-                Data = new(),
+                Timestamp = startedAt,
+                Data = new()
+                {
+                    ChannelId = broadcasterId,
+                    Title = meta.Title,
+                    GameName = meta.GameName,
+                    Description = meta.Description,
+                    ExternalBroadcastId = online.Id,
+                    DestinationUrl = $"https://twitch.tv/{online.BroadcasterUserLogin}"
+                },
                 Source = EventSource.Twitch
             };
 
@@ -287,13 +304,40 @@ namespace Hellbot.Service.EventBus.Producers
 
         private async Task OnStreamOffline(object? sender, StreamOfflineArgs e)
         {
+            var offline = e.Payload.Event;
             var hellbotEvent = new StreamStopped
             {
-                Data = new(),
+                Data = new() { ChannelId = offline.BroadcasterUserId },
                 Source = EventSource.Twitch
             };
 
             await _bus.Publish(hellbotEvent);
+        }
+
+        private async Task<StreamMetadata?> FetchTwitchStreamMetadataAsync(string broadcasterUserId)
+        {
+            try
+            {
+                var ids = new List<string> { broadcasterUserId };
+                var streamsResp = await _twitch.API.Streams.GetStreamsAsync(userIds: ids).ConfigureAwait(false);
+                var stream = streamsResp.Streams.FirstOrDefault();
+
+                var channelResp = await _twitch.API.Channels.GetChannelInformationAsync(broadcasterIds: ids).ConfigureAwait(false);
+                var channel = channelResp.Data.FirstOrDefault();
+
+                var title = stream?.Title ?? channel?.Title;
+                var game = stream?.GameName ?? channel?.GameName;
+
+                if (title == null && game == null)
+                    return null;
+
+                return new StreamMetadata { Title = title, GameName = game };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Helix failed when resolving stream metadata for {BroadcasterId}", broadcasterUserId);
+                return null;
+            }
         }
     }
 }

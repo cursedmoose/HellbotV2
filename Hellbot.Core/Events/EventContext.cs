@@ -1,10 +1,12 @@
-﻿using Hellbot.Core.Users;
+﻿using Hellbot.Core.Sessions;
+using Hellbot.Core.Users;
 
 namespace Hellbot.Core.Events
 {
     public record struct EventContext
     {
         public UserContext? User { get; set; }
+        public StreamSessionSnapshot? Stream { get; set; }
 
         public static EventContext From(UserIdentity identity)
         {

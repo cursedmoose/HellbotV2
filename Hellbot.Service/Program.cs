@@ -1,6 +1,6 @@
 using FluentMigrator.Runner;
 using Hellbot.Core.Events;
-using Hellbot.Core.Sessions;
+using Hellbot.Service.Sessions;
 using Hellbot.Service.Audio;
 using Hellbot.Service.Clients.ElevenLabs;
 using Hellbot.Service.Clients.OBS;
@@ -65,6 +65,7 @@ builder.Services.AddOptions<ElevenLabsOptions>()
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database"));
 builder.Services.Configure<WhisperOptions>(builder.Configuration.GetSection("Whisper"));
 builder.Services.Configure<PlayniteOptions>(builder.Configuration.GetSection("Playnite"));
+builder.Services.Configure<StreamSessionOptions>(builder.Configuration.GetSection("StreamSession"));
 
 
 // Database
