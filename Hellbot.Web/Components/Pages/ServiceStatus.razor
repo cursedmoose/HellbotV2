@@ -66,12 +66,12 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<EventViewModel>("ReceiveEvent", evt =>
+        hubConnection.On<HubEventMessage>("ReceiveEvent", evt =>
         {
-            if (evt.Type == "WebsocketStateChanged" && evt.Source is not null
+            if (evt.Type == nameof(WebsocketStateChanged)
                 && TryReadStatePayload(evt.Data, out var status, out var details))
             {
-                var ix = rows.FindIndex(r => r.Platform == evt.Source!.Platform);
+                var ix = rows.FindIndex(r => r.Platform == evt.Source.Platform);
                 if (ix >= 0)
                 {
                     rows[ix] = new ServiceStatusRowDto

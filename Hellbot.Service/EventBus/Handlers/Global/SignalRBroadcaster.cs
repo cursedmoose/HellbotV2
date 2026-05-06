@@ -1,4 +1,5 @@
 ﻿using Hellbot.Core.Events;
+using Hellbot.Core.Users;
 using Microsoft.AspNetCore.SignalR;
 using System.Text.Json;
 
@@ -15,16 +16,23 @@ namespace Hellbot.Service.EventBus.Handlers.Global
             var dataProperty = eventType.GetProperty("Data");
             var dataValue = dataProperty?.GetValue(evt)!;
 
-            var envelope = new
+            var message = new HubEventMessage
             {
-                id = evt.Id,
-                type = evt.GetType().Name,
-                timestamp = evt.Timestamp,
-                source = new { platform = evt.Source.Platform, channel = evt.Source.Channel },
-                data = JsonSerializer.SerializeToElement(dataValue, dataValue.GetType())
+                Id = evt.Id,
+                Type = evt.GetType().Name,
+                Timestamp = evt.Timestamp,
+                Source = evt.Source,
+                User = TryGetUserIdentity(evt.Context),
+                Data = JsonSerializer.SerializeToElement(dataValue, dataValue.GetType()),
             };
 
-            return hubContext.Clients.All.SendAsync("ReceiveEvent", envelope);
+            return hubContext.Clients.All.SendAsync("ReceiveEvent", message);
+        }
+
+        private static UserIdentity? TryGetUserIdentity(EventContext context)
+        {
+            var u = context.User;
+            return u.HasValue ? u.Value.Identity : null;
         }
     }
 }

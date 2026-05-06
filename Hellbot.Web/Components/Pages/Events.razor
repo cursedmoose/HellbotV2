@@ -1,6 +1,6 @@
 ﻿@page "/events"
+@using Hellbot.Core.Events
 @using Hellbot.UI.Components.Extensions
-@using Hellbot.UI.Components.Model
 @using Hellbot.UI.Configuration
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.Extensions.Options
@@ -37,12 +37,12 @@
         <HeaderContent>
             <MudTh></MudTh>
 
-            <MudTh Style="cursor:pointer" @onclick="() => SortBy(nameof(EventViewModel.Type))">
-                Type @(sortColumn == nameof(EventViewModel.Type) ? (sortAsc ? "↑" : "↓") : "")
+            <MudTh Style="cursor:pointer" @onclick="() => SortBy(nameof(HubEventMessage.Type))">
+                Type @(sortColumn == nameof(HubEventMessage.Type) ? (sortAsc ? "↑" : "↓") : "")
             </MudTh>
 
-            <MudTh Style="cursor:pointer" @onclick="() => SortBy(nameof(EventViewModel.Timestamp))">
-                Timestamp @(sortColumn == nameof(EventViewModel.Timestamp) ? (sortAsc ? "↑" : "↓") : "")
+            <MudTh Style="cursor:pointer" @onclick="() => SortBy(nameof(HubEventMessage.Timestamp))">
+                Timestamp @(sortColumn == nameof(HubEventMessage.Timestamp) ? (sortAsc ? "↑" : "↓") : "")
             </MudTh>
 
             <MudTh>Id</MudTh>
@@ -76,6 +76,11 @@
                 <MudTr>
                     <MudTd>
                         <MudText Typo="Typo.body2" Style="white-space:pre-wrap; word-break:break-word;">
+                            @if (evt.User is { } user)
+                            {
+                                <span style="opacity:0.9;">User: @(user.Username ?? user.UserId) (@user.Platform, @user.UserId)</span>
+                                <span style="margin:0 0.5em;">|</span>
+                            }
                             @FormatEventData(evt.Data)
                         </MudText>
                     </MudTd>
@@ -93,12 +98,12 @@
     // STATE
     // =========================
 
-    private List<EventViewModel> events = new();
+    private List<HubEventMessage> events = new();
     private HashSet<Guid> expanded = new();
     private HashSet<string> selectedTypes = new();
     private List<string> uniqueEventTypes = new();
 
-    private string sortColumn = nameof(EventViewModel.Timestamp);
+    private string sortColumn = nameof(HubEventMessage.Timestamp);
     private bool sortAsc = false;
 
     private HubConnection? hubConnection;
@@ -115,10 +120,9 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<EventViewModel>("ReceiveEvent", evt =>
+        hubConnection.On<HubEventMessage>("ReceiveEvent", raw =>
         {
-            if (evt.Id == Guid.Empty)
-                evt.Id = Guid.NewGuid();
+            var evt = raw.Id == Guid.Empty ? raw with { Id = Guid.NewGuid() } : raw;
 
             events.Insert(0, evt);
 
@@ -141,7 +145,7 @@
     // FILTERED + SORTED DATA
     // =========================
 
-    private IEnumerable<EventViewModel> ProcessedEvents =>
+    private IEnumerable<HubEventMessage> ProcessedEvents =>
         events
             .Where(e => selectedTypes.Count == 0 || selectedTypes.Contains(e.Type))
             .OrderByDynamic(sortColumn, sortAsc);
