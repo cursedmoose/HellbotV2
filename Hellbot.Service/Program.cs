@@ -97,6 +97,7 @@ builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
 builder.Services.AddSingleton<ITtsPlaybackGate, TtsPlaybackGate>();
 builder.Services.AddSingleton<ITtsQueue, TtsQueue>();
 builder.Services.AddSingleton<IAudioPlayer, NAudioPlayer>();
+builder.Services.AddSingleton<IStreamingChannelUpdater, TwitchStreamingChannelUpdater>();
 builder.Services.AddSingleton<IStreamSessionManager, StreamSessionManager>();
 
 // Event Producers

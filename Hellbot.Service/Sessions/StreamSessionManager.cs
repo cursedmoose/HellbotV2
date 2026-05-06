@@ -1,13 +1,17 @@
 using Hellbot.Core.Events;
 using Hellbot.Core.Sessions;
-using Hellbot.Service.Clients.Twitch;
 using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
 
 namespace Hellbot.Service.Sessions
 {
-    public class StreamSessionManager(IOptions<StreamSessionOptions> options, TwitchClient twitch) : IStreamSessionManager
+    public class StreamSessionManager(
+        IOptions<StreamSessionOptions> options,
+        IEnumerable<IStreamingChannelUpdater> channelUpdaters) : IStreamSessionManager
     {
+        private readonly Dictionary<PlatformSource, IStreamingChannelUpdater> _channelUpdaters =
+            channelUpdaters.ToDictionary(static u => u.Platform);
+
         private readonly Lock _lock = new();
         private StreamSession? _currentSession;
         private StreamSessionSnapshot? _streamSnapshot;
@@ -21,8 +25,7 @@ namespace Hellbot.Service.Sessions
 
         public async Task UpdateChannelAsync(string? gameId, string? title)
         {
-            await twitch.ModifyChannelInformationAsync(gameId, title);
-
+            List<StreamDestination> destinations;
             lock (_lock)
             {
                 if (_currentSession is not { IsActive: true })
@@ -31,8 +34,18 @@ namespace Hellbot.Service.Sessions
                 if (!string.IsNullOrEmpty(title))
                     _currentSession.Metadata = _currentSession.Metadata with { Title = title };
 
+                destinations = _currentSession.Destinations.ToList();
                 RefreshSnapshot();
             }
+
+            var outbound = new List<Task>();
+            foreach (var d in destinations)
+            {
+                if (_channelUpdaters.TryGetValue(d.Platform, out var updater))
+                    outbound.Add(updater.UpdateAsync(d, gameId, title));
+            }
+
+            await Task.WhenAll(outbound);
         }
 
         public StreamSession StartOrAddDestination(StreamSessionStartInfo info)
