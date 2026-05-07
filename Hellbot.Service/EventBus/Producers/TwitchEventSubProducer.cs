@@ -9,6 +9,7 @@ using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
 using TwitchLib.Api.Core.Enums;
 using TwitchLib.Api.Helix.Models.EventSub;
+using TwitchLib.EventSub.Core.EventArgs;
 using TwitchLib.EventSub.Core.EventArgs.Channel;
 using TwitchLib.EventSub.Core.EventArgs.Stream;
 using TwitchLib.EventSub.Websockets;
@@ -25,6 +26,9 @@ namespace Hellbot.Service.EventBus.Producers
         private readonly EventSubWebsocketClient _eventSubWebsocketClient;
         private readonly TwitchClient _twitch;
         private readonly string _userId;
+
+        private string ResolvedBroadcasterId =>
+            string.IsNullOrEmpty(_options.BroadcasterId) ? _options.ChannelId : _options.BroadcasterId;
 
         private const string BROADCASTER_ID = "broadcaster_user_id";
         private const string MODERATOR_ID = "moderator_user_id";
@@ -58,6 +62,7 @@ namespace Hellbot.Service.EventBus.Producers
             // Moderation Hooks
             _eventSubWebsocketClient.ChannelBan += OnChannelBan;
             _eventSubWebsocketClient.ChannelUnban += OnChannelUnban;
+            _eventSubWebsocketClient.ChannelFollow += OnChannelFollow;
 
             _eventSubWebsocketClient.StreamOnline += OnStreamOnline;
             _eventSubWebsocketClient.StreamOffline += OnStreamOffline;
@@ -273,6 +278,25 @@ namespace Hellbot.Service.EventBus.Producers
             };
 
             await _bus.Publish(hellbotEvent);
+        }
+
+        private Task OnChannelFollow(object? sender, ChannelFollowArgs e)
+        {
+            var ev = e.Payload.Event;
+            if (!string.Equals(ev.BroadcasterUserId, ResolvedBroadcasterId, StringComparison.Ordinal))
+                return Task.CompletedTask;
+
+            return _bus.Publish(new UserFollowed
+            {
+                Context = CreateContext(ev.UserId, ev.UserName),
+                Data = new()
+                {
+                    FollowerUserId = ev.UserId,
+                    FollowerUserName = ev.UserName,
+                    FollowedAt = ev.FollowedAt,
+                },
+                Source = EventSource.Twitch
+            });
         }
 
         private async Task OnStreamOnline(object? sender, StreamOnlineArgs e)
