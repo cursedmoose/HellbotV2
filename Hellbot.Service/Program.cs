@@ -1,3 +1,4 @@
+using Dapper;
 using FluentMigrator.Runner;
 using Hellbot.Core.Events;
 using Hellbot.Service.Sessions;
@@ -68,7 +69,7 @@ builder.Services.Configure<PlayniteOptions>(builder.Configuration.GetSection("Pl
 builder.Services.Configure<StreamSessionOptions>(builder.Configuration.GetSection("StreamSession"));
 
 
-// Database
+SqlMapper.AddTypeHandler(new SqliteGuidTypeHandler());
 builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 builder.Services.AddScoped<IDbContext, SqliteDbContext>();
 builder.Services.AddSingleton<UserCache>();
