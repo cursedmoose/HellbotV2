@@ -1,4 +1,5 @@
 ﻿using Hellbot.Core.Commands;
+using Hellbot.Core.Users;
 
 namespace Hellbot.Service.Commands
 {

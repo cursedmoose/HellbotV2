@@ -1,4 +1,3 @@
-using Hellbot.Core.Commands;
 using Hellbot.Core.Events;
 using Hellbot.Core.Events.Users;
 using Hellbot.Core.Users;

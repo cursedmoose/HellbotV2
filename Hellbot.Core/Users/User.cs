@@ -1,6 +1,4 @@
-﻿using Hellbot.Core.Commands;
-
-namespace Hellbot.Core.Users
+﻿namespace Hellbot.Core.Users
 {
     public record User
     {

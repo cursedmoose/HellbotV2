@@ -1,4 +1,4 @@
-﻿namespace Hellbot.Core.Commands
+namespace Hellbot.Core.Users
 {
     public enum Role
     {

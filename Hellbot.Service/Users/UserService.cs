@@ -1,5 +1,4 @@
-﻿using Hellbot.Core.Commands;
-using Hellbot.Core.TTS;
+﻿using Hellbot.Core.TTS;
 using Hellbot.Core.Users;
 using Hellbot.Service.Data;
 using Hellbot.Service.Data.Tables.Users;
@@ -62,7 +61,7 @@ namespace Hellbot.Service.Users
             {
                 var user = new User
                 {
-                    Role = Core.Commands.Role.User
+                    Role = Role.User
                 };
 
                 await users.Create(user, tx);

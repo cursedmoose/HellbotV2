@@ -1,5 +1,6 @@
 ﻿using Hellbot.Core.Commands;
 using Hellbot.Core.Events;
+using Hellbot.Core.Users;
 using Hellbot.Core.Events.Chat;
 
 namespace Hellbot.Service.Commands
