@@ -127,10 +127,10 @@ builder.Services.Scan(scan => scan
 
 builder.Services.AddScoped<IUserService, UserService>();
 
-// Middleware (order matters, but not really)
-builder.Services.AddScoped<IEventMiddleware, EventLogger>();
-builder.Services.AddScoped<IEventMiddleware, UserContextEnricher>();
+// Middleware runs in registration order; enrich context before EventLogger so logs include StreamId / Context.
 builder.Services.AddScoped<IEventMiddleware, StreamSessionContextEnricher>();
+builder.Services.AddScoped<IEventMiddleware, UserContextEnricher>();
+builder.Services.AddScoped<IEventMiddleware, EventLogger>();
 
 // Producers
 builder.Services.AddHostedService<HeartbeatProducer>();
