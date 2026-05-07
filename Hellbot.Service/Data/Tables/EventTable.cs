@@ -23,15 +23,16 @@ namespace Hellbot.Service.Data.Tables
             var eventJson = JsonSerializer.Serialize(evt, eventType, _jsonOptions);
 
             await connection.ExecuteAsync(@"
-            INSERT INTO events (id, timestamp, platform, event_type, metadata)
-            VALUES (@Id, @Timestamp, @Platform, @EventType, @Metadata)
+            INSERT INTO events (id, timestamp, platform, event_type, metadata, stream_id)
+            VALUES (@Id, @Timestamp, @Platform, @EventType, @Metadata, @StreamId)
         ", new
             {
                 Id = evt.Id,
                 Timestamp = evt.Timestamp,
                 Platform = PlatformSource.GetName(evt.Source.Platform),
                 EventType = eventType.Name,
-                Metadata = eventJson
+                Metadata = eventJson,
+                StreamId = evt.Context.Stream?.Id.ToString()
             });
         }
     }
