@@ -1,4 +1,5 @@
-﻿using Hellbot.Core.TTS;
+﻿using Hellbot.Core.Commands;
+using Hellbot.Core.TTS;
 using Hellbot.Core.Users;
 using Hellbot.Service.Data;
 using Hellbot.Service.Data.Tables.Users;
@@ -41,6 +42,17 @@ namespace Hellbot.Service.Users
             }
 
             return existingUser;
+        }
+
+        public async Task UpdateUserRoleAsync(UserIdentity identity, Role targetRole)
+        {
+            var user = await GetOrCreateUser(identity);
+            if (user.Role >= targetRole)
+                return;
+
+            var updated = user with { Role = targetRole };
+            await users.Update(updated);
+            cache.SetUser(updated);
         }
 
         private async Task<User> CreateUser(UserIdentity identity)
