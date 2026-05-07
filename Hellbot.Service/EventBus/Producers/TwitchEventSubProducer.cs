@@ -63,6 +63,7 @@ namespace Hellbot.Service.EventBus.Producers
             _eventSubWebsocketClient.ChannelBan += OnChannelBan;
             _eventSubWebsocketClient.ChannelUnban += OnChannelUnban;
             _eventSubWebsocketClient.ChannelFollow += OnChannelFollow;
+            _eventSubWebsocketClient.ChannelSubscribe += OnChannelSubscribe;
 
             _eventSubWebsocketClient.StreamOnline += OnStreamOnline;
             _eventSubWebsocketClient.StreamOffline += OnStreamOffline;
@@ -294,6 +295,25 @@ namespace Hellbot.Service.EventBus.Producers
                     FollowerUserId = ev.UserId,
                     FollowerUserName = ev.UserName,
                     FollowedAt = ev.FollowedAt,
+                },
+                Source = EventSource.Twitch
+            });
+        }
+
+        private Task OnChannelSubscribe(object? sender, ChannelSubscribeArgs e)
+        {
+            var ev = e.Payload.Event;
+            if (!string.Equals(ev.BroadcasterUserId, ResolvedBroadcasterId, StringComparison.Ordinal))
+                return Task.CompletedTask;
+
+            return _bus.Publish(new UserSubscribed
+            {
+                Context = CreateContext(ev.UserId, ev.UserName),
+                Data = new()
+                {
+                    SubscriberUserId = ev.UserId,
+                    SubscriberUserName = ev.UserName,
+                    Tier = ev.Tier,
                 },
                 Source = EventSource.Twitch
             });
