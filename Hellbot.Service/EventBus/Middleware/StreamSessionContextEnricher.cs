@@ -10,7 +10,6 @@ namespace Hellbot.Service.EventBus.Middleware
             if (evt is StreamStarted)
                 return Task.CompletedTask;
 
-            evt.StreamId = sessionManager.CurrentSessionId;
             var snapshot = sessionManager.CurrentStreamSnapshot;
             if (snapshot != null)
                 evt.Context = evt.Context with { Stream = snapshot };

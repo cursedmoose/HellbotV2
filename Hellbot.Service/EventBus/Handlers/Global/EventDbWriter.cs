@@ -7,12 +7,6 @@ namespace Hellbot.Service.EventBus.Handlers.Global
     {
         public bool CanHandle(IHellbotEvent evt) => true;
 
-        public async Task Handle(IHellbotEvent evt)
-        {
-            if (evt.StreamId != null || true)
-            {
-                await db.InsertAsync(evt);
-            }
-        }
+        public Task Handle(IHellbotEvent evt) => db.InsertAsync(evt);
     }
 }

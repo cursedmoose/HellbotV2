@@ -127,7 +127,7 @@ builder.Services.Scan(scan => scan
 
 builder.Services.AddScoped<IUserService, UserService>();
 
-// Middleware runs in registration order; enrich context before EventLogger so logs include StreamId / Context.
+// Middleware runs in registration order; enrich context before EventLogger so logs include Context.Stream.
 builder.Services.AddScoped<IEventMiddleware, StreamSessionContextEnricher>();
 builder.Services.AddScoped<IEventMiddleware, UserContextEnricher>();
 builder.Services.AddScoped<IEventMiddleware, EventLogger>();

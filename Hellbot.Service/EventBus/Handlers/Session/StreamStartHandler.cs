@@ -26,10 +26,13 @@ namespace Hellbot.Service.EventBus.Handlers.Session
                     Url: evt.Data.DestinationUrl));
 
             sessionManager.StartOrAddDestination(info);
-            evt.StreamId = sessionManager.CurrentSessionId;
             evt.Context = evt.Context with { Stream = sessionManager.CurrentStreamSnapshot };
 
-            logger.LogInformation("Stream Session {SessionId} — destination {Platform}:{Channel}", evt.StreamId, evt.Source.Platform, channelId);
+            logger.LogInformation(
+                "Stream Session {SessionId} — destination {Platform}:{Channel}",
+                sessionManager.CurrentSessionId,
+                evt.Source.Platform,
+                channelId);
             return Task.CompletedTask;
         }
     }
