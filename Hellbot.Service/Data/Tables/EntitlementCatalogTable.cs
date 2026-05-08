@@ -1,12 +1,33 @@
 using Dapper;
 using Hellbot.Core.Entitlements;
+using Hellbot.Service.Data;
+using Microsoft.Data.Sqlite;
 using System.Data;
 
 namespace Hellbot.Service.Data.Tables;
 
 public class EntitlementCatalogTable(IDbContext db)
 {
-    public async Task Insert(EntitlementCatalogItem item, IDbTransaction? tx = null)
+    public enum CatalogInsertResult
+    {
+        Created,
+        DuplicateKey,
+    }
+
+    public async Task<CatalogInsertResult> TryInsert(EntitlementCatalogItem item, IDbTransaction? tx = null)
+    {
+        try
+        {
+            await InsertCore(item, tx);
+            return CatalogInsertResult.Created;
+        }
+        catch (SqliteException ex) when (SqliteErrors.IsConstraintViolation(ex))
+        {
+            return CatalogInsertResult.DuplicateKey;
+        }
+    }
+
+    private async Task InsertCore(EntitlementCatalogItem item, IDbTransaction? tx = null)
     {
         await db.Connection.ExecuteAsync(
             """

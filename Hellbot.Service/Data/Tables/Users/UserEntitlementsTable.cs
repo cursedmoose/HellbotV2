@@ -1,11 +1,19 @@
 ﻿using Dapper;
 using Hellbot.Core.Entitlements;
+using Hellbot.Service.Data;
+using Microsoft.Data.Sqlite;
 using System.Data;
 
 namespace Hellbot.Service.Data.Tables.Users;
 
 public class UserEntitlementsTable(IDbContext db)
 {
+    public enum GrantEntitlementResult
+    {
+        Granted,
+        Duplicate,
+    }
+
     private sealed class EntitlementJoinRow
     {
         public DateTime EarnedAt { get; set; }
@@ -15,20 +23,31 @@ public class UserEntitlementsTable(IDbContext db)
         public bool IsActive { get; set; }
     }
 
-    public async Task Grant(Guid userId, Guid entitlementCatalogItemId, IDbTransaction? tx = null)
+    public async Task<GrantEntitlementResult> Grant(
+        Guid userId,
+        Guid entitlementCatalogItemId,
+        IDbTransaction? tx = null)
     {
-        await db.Connection.ExecuteAsync(
-            """
-            INSERT INTO user_entitlements (user_id, entitlement_catalog_id, earned_at)
-            VALUES (@UserId, @CatalogItemId, @EarnedAt)
-            """,
-            new
-            {
-                UserId = userId,
-                CatalogItemId = entitlementCatalogItemId,
-                EarnedAt = DateTime.UtcNow,
-            },
-            transaction: tx);
+        try
+        {
+            await db.Connection.ExecuteAsync(
+                """
+                INSERT INTO user_entitlements (user_id, entitlement_catalog_id, earned_at)
+                VALUES (@UserId, @CatalogItemId, @EarnedAt)
+                """,
+                new
+                {
+                    UserId = userId,
+                    CatalogItemId = entitlementCatalogItemId,
+                    EarnedAt = DateTime.UtcNow,
+                },
+                transaction: tx);
+            return GrantEntitlementResult.Granted;
+        }
+        catch (SqliteException ex) when (SqliteErrors.IsConstraintViolation(ex))
+        {
+            return GrantEntitlementResult.Duplicate;
+        }
     }
 
     public async Task<IReadOnlyList<UserEntitlement>> GetAll(Guid userId)

@@ -2,7 +2,6 @@
 using Hellbot.Service.Data.Tables;
 using Hellbot.Service.Data.Tables.Users;
 using Hellbot.Service.Users;
-using Microsoft.Data.Sqlite;
 
 namespace Hellbot.Service.EventBus.Handlers.Rewards;
 
@@ -12,8 +11,6 @@ public class GrantRewardHandler(
     IUserService userService,
     ILogger<GrantRewardHandler> logger) : EventHandlerBase<GrantReward>
 {
-    private const int SqliteConstraint = 19; // SQLITE_CONSTRAINT
-
     public async override Task Handle(GrantReward evt)
     {
         var catalogItemId = evt.Data.EntitlementCatalogItemId;
@@ -44,11 +41,8 @@ public class GrantRewardHandler(
             return;
         }
 
-        try
-        {
-            await entitlements.Grant(userId, catalogItemId);
-        }
-        catch (SqliteException ex) when (ex.SqliteErrorCode == SqliteConstraint)
+        var grantResult = await entitlements.Grant(userId, catalogItemId);
+        if (grantResult == UserEntitlementsTable.GrantEntitlementResult.Duplicate)
         {
             logger.LogWarning(
                 "Duplicate grant skipped: user={UserId} already has catalog item {CatalogItemId}.",

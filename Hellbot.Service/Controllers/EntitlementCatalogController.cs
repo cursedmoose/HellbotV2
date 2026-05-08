@@ -1,7 +1,6 @@
 using Hellbot.Core.Entitlements;
 using Hellbot.Service.Data.Tables;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.Sqlite;
 
 namespace Hellbot.Service.Controllers;
 
@@ -9,7 +8,6 @@ namespace Hellbot.Service.Controllers;
 [ApiController]
 public class EntitlementCatalogController(EntitlementCatalogTable catalog) : ControllerBase
 {
-    private const int SqliteConstraint = 19; // SQLITE_CONSTRAINT
     public record CreateEntitlementCatalogItemRequest
     {
         public required EntitlementType EntitlementType { get; init; }
@@ -32,14 +30,9 @@ public class EntitlementCatalogController(EntitlementCatalogTable catalog) : Con
             IsActive = true,
         };
 
-        try
-        {
-            await catalog.Insert(item);
-        }
-        catch (SqliteException ex) when (ex.SqliteErrorCode == SqliteConstraint)
-        {
+        var inserted = await catalog.TryInsert(item);
+        if (inserted == EntitlementCatalogTable.CatalogInsertResult.DuplicateKey)
             return Conflict();
-        }
 
         return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
     }
