@@ -44,6 +44,13 @@ public class EntitlementCatalogController(EntitlementCatalogTable catalog) : Con
         return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
     }
 
+    [HttpGet("type/{entitlementType}")]
+    public async Task<ActionResult<IReadOnlyList<EntitlementCatalogItem>>> GetByType(EntitlementType entitlementType)
+    {
+        var rows = await catalog.GetByType(entitlementType);
+        return Ok(rows);
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<EntitlementCatalogItem>> GetById(Guid id)
     {
