@@ -9,7 +9,6 @@ namespace Hellbot.Service.Users
     {
         private readonly ConcurrentDictionary<UserIdentity, Guid> _identityToUserId = new();
         private readonly ConcurrentDictionary<Guid, User> _users = new();
-        private readonly ConcurrentDictionary<Guid, UserCustomizationSet> _customizations = new();
         private readonly ConcurrentDictionary<Guid, UserExperienceSnapshot> _experienceSnapshots = new();
 
         public void MapIdentity(UserIdentity identity, Guid userId)
@@ -48,26 +47,6 @@ namespace Hellbot.Service.Users
             return _users.TryGetValue(userId, out user);
         }
 
-        public void SetCustomizations(Guid userId, UserCustomizationSet set)
-        {
-            _customizations[userId] = set;
-        }
-
-        public bool TryGetCustomizations(Guid userId, [MaybeNullWhen(false)] out UserCustomizationSet set)
-        {
-            return _customizations.TryGetValue(userId, out set);
-        }
-
-        public bool TryGetCustomizations(UserIdentity identity, [MaybeNullWhen(false)] out UserCustomizationSet set)
-        {
-            if (TryGetUserId(identity, out var userId))
-            {
-                return _customizations.TryGetValue(userId, out set);
-            }
-            set = null;
-            return false;
-        }
-
         public bool TryGetExperience(Guid userId, [MaybeNullWhen(false)] out UserExperienceSnapshot snapshot)
         {
             return _experienceSnapshots.TryGetValue(userId, out snapshot);
@@ -87,7 +66,6 @@ namespace Hellbot.Service.Users
         public void InvalidateUser(Guid userId)
         {
             _users.TryRemove(userId, out _);
-            _customizations.TryRemove(userId, out _);
             _experienceSnapshots.TryRemove(userId, out _);
 
             var identitiesToRemove = _identityToUserId

@@ -1,8 +1,6 @@
-﻿using Hellbot.Core.TTS;
-using Hellbot.Core.Users;
+﻿using Hellbot.Core.Users;
 using Hellbot.Service.Data;
 using Hellbot.Service.Data.Tables.Users;
-using System.Text.Json;
 
 namespace Hellbot.Service.Users
 {
@@ -10,7 +8,6 @@ namespace Hellbot.Service.Users
         IDbContext db,
         UserTable users,
         UserIdentitiesTable identities,
-        UserCustomizationsTable customizations,
         UserCache cache,
         ILogger<UserService> logger) : IUserService
     {
@@ -75,33 +72,6 @@ namespace Hellbot.Service.Users
                 tx.Rollback();
                 throw;
             }
-        }
-
-        public async Task<UserCustomizationSet> GetUserCustomizations(Guid userId)
-        {
-            if (cache.TryGetCustomizations(userId, out UserCustomizationSet? set)) return set;
-
-            var userCustomizations = await customizations.GetAll(userId);
-            UserCustomizationSet settings = new();
-
-            foreach (var customization in userCustomizations)
-            {
-                switch (customization.Type)
-                {
-                    case CustomizationType.VoiceId:
-                        settings.VoiceId = customization.Value;
-                        break;
-                    case CustomizationType.VoiceSettings:
-                        settings.VoiceSettings = JsonSerializer.Deserialize<VoiceSettings>(customization.Value);
-                        break;
-                    case CustomizationType.SceneId:
-                        settings.SceneId = customization.Value;
-                        break;
-                }
-            }
-
-            cache.SetCustomizations(userId, settings);
-            return settings;
         }
 
         public async Task<Guid?> GetUserId(UserIdentity userIdentity)
