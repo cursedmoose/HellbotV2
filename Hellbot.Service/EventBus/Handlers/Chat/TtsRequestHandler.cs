@@ -1,38 +1,47 @@
-﻿using Hellbot.Core.Events;
+﻿using Hellbot.Core.Entitlements;
+using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
 using Hellbot.Core.TTS;
 using Hellbot.Core.Users;
 using Hellbot.Service.Tts;
-using Hellbot.Service.Users;
 
-namespace Hellbot.Service.EventBus.Handlers.Chat
+namespace Hellbot.Service.EventBus.Handlers.Chat;
+
+public class TtsRequestHandler(ITtsQueue ttsQueue, ILogger<TtsRequestHandler> logger) : EventHandlerBase<TtsRequested>
 {
-    public class TtsRequestHandler(ITtsQueue ttsQueue, IUserService users, ILogger<TtsRequestHandler> logger) : EventHandlerBase<TtsRequested>
+    public override async Task Handle(TtsRequested evt)
     {
-        public override async Task Handle(TtsRequested evt)
+        if (evt.Context.User is not UserContext uc || uc.Info is not User user)
         {
-            var userId = evt.Context.User is UserContext { Info: User user }
-                ? user.Id
-                : Guid.Empty;
-            var customizations = await users.GetUserCustomizations(userId);
-
-            if (string.IsNullOrEmpty(customizations.VoiceId))
-            {
-                logger.LogDebug("Skipping TTS request={RequestId} User={UserId}. No voice configured.", evt.Id, userId);
-                return;
-            }
-
-            var ttsRequest = new TtsRequest
-            {
-                RequestId = evt.Id,
-                Message = evt.Data.Text,
-                VoiceId = customizations.VoiceId,
-                VoiceSettings = customizations.VoiceSettings ?? new(),
-                SceneId = customizations.SceneId
-            };
-
-            await ttsQueue.EnqueueAsync(ttsRequest);
-            logger.LogInformation("Enqueued request={RequestId}. Queue length={Length}", evt.Id, ttsQueue.Length());
+            logger.LogDebug("Skipping TTS request={RequestId}. No enriched user context.", evt.Id);
+            return;
         }
+
+        var experience = uc.Experience ?? UserExperienceSnapshot.Empty;
+        var voiceItem = experience.GetOrDefault(EntitlementType.TtsVoice);
+        var voiceId = voiceItem?.EntitlementId;
+
+        if (string.IsNullOrEmpty(voiceId))
+        {
+            logger.LogDebug(
+                "Skipping TTS request={RequestId} User={UserId}. No TtsVoice equipped.",
+                evt.Id,
+                user.Id);
+            return;
+        }
+
+        var avatarItem = experience.GetOrDefault(EntitlementType.TtsAvatar);
+        var sceneCandidate = avatarItem?.EntitlementId;
+        var ttsRequest = new TtsRequest
+        {
+            RequestId = evt.Id,
+            Message = evt.Data.Text,
+            VoiceId = voiceId,
+            VoiceSettings = new VoiceSettings(),
+            SceneId = string.IsNullOrEmpty(sceneCandidate) ? null : sceneCandidate,
+        };
+
+        await ttsQueue.EnqueueAsync(ttsRequest);
+        logger.LogInformation("Enqueued request={RequestId}. Queue length={Length}", evt.Id, ttsQueue.Length());
     }
 }
