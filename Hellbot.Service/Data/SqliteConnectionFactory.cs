@@ -18,8 +18,6 @@ namespace Hellbot.Service.Data
             using var cmd = connection.CreateCommand();
             cmd.CommandText = "PRAGMA journal_mode=WAL;";
             cmd.ExecuteNonQuery();
-            cmd.CommandText = "PRAGMA foreign_keys=ON;";
-            cmd.ExecuteNonQuery();
 
             return connection;
         }

@@ -3,7 +3,7 @@ using FluentMigrator;
 namespace Hellbot.Service.Data.Migrations;
 
 [Migration(2026050801)]
-public class M009_UserEntitlementsCatalogFk : Migration
+public class M009_RebuildUserEntitlementsForCatalog : Migration
 {
     public override void Up()
     {
@@ -14,10 +14,6 @@ public class M009_UserEntitlementsCatalogFk : Migration
             .WithColumn("user_id").AsGuid().NotNullable()
             .WithColumn("entitlement_catalog_id").AsGuid().NotNullable()
             .WithColumn("earned_at").AsDateTime().NotNullable();
-
-        Create.ForeignKey("fk_user_entitlements_entitlement_catalog")
-            .FromTable("user_entitlements").ForeignColumn("entitlement_catalog_id")
-            .ToTable("entitlement_catalog").PrimaryColumn("id");
 
         Create.UniqueConstraint("uq_user_entitlements_user_catalog")
             .OnTable("user_entitlements")
