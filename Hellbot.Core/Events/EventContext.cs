@@ -1,4 +1,5 @@
-﻿using Hellbot.Core.Sessions;
+﻿using Hellbot.Core.Entitlements;
+using Hellbot.Core.Sessions;
 using Hellbot.Core.Users;
 
 namespace Hellbot.Core.Events
@@ -21,5 +22,6 @@ namespace Hellbot.Core.Events
     {
         public required UserIdentity Identity { get; set; }
         public User? Info { get; set; }
+        public UserExperienceSnapshot? Experience { get; set; }
     }
 }

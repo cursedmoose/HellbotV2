@@ -9,6 +9,7 @@ public class GrantRewardHandler(
     UserEntitlementsTable entitlements,
     EntitlementCatalogTable catalog,
     IUserService userService,
+    UserCache cache,
     ILogger<GrantRewardHandler> logger) : EventHandlerBase<GrantReward>
 {
     public async override Task Handle(GrantReward evt)
@@ -42,6 +43,11 @@ public class GrantRewardHandler(
         }
 
         var grantResult = await entitlements.Grant(userId, catalogItemId);
+        if (grantResult == UserEntitlementsTable.GrantEntitlementResult.Granted)
+        {
+            cache.InvalidateExperience(userId);
+        }
+
         if (grantResult == UserEntitlementsTable.GrantEntitlementResult.Duplicate)
         {
             logger.LogWarning(

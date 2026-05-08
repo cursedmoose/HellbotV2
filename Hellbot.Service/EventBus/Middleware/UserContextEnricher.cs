@@ -7,10 +7,13 @@ namespace Hellbot.Service.EventBus.Middleware
     {
         public async Task Invoke(IHellbotEvent evt)
         {
-            if (evt.Context.User is UserContext context)
+            if (evt.Context.User is UserContext uc)
             {
-                var user = await userService.GetOrCreateUser(context.Identity);
-                context.Info = user;
+                var user = await userService.GetOrCreateUser(uc.Identity);
+                evt.Context = evt.Context with
+                {
+                    User = uc with { Info = user },
+                };
             }
 
             return;
