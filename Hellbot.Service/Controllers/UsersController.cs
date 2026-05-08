@@ -1,5 +1,6 @@
 using Hellbot.Core.Entitlements;
 using Hellbot.Core.Events;
+using Hellbot.Core.Events.Preferences;
 using Hellbot.Core.Events.Rewards;
 using Hellbot.Core.Users;
 using Hellbot.Service.Data.Tables.Users;
@@ -15,8 +16,7 @@ public class UsersController(
     IEventBus bus,
     IUserService users,
     UserPreferencesTable preferencesTable,
-    UserEntitlementsTable entitlements,
-    UserCache cache) : ControllerBase
+    UserEntitlementsTable entitlements) : ControllerBase
 {
     public sealed record UpsertUserPreferenceRequest
     {
@@ -61,20 +61,19 @@ public class UsersController(
     /// <summary>Set which granted catalog row is equipped for an <see cref="EntitlementType"/> slot.</summary>
     [HttpPut("preferences")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PutPreference([FromQuery] UserIdentity recipient, [FromBody] UpsertUserPreferenceRequest body)
     {
-        try
+        await bus.Publish(new SetUserPreference
         {
-            var user = await users.GetOrCreateUser(recipient);
-            await preferencesTable.UpsertValidatedSelection(user.Id, body.EntitlementType, body.SelectedEntitlementCatalogId);
-            cache.InvalidateExperience(user.Id);
-            return NoContent();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { detail = ex.Message });
-        }
+            Source = EventSource.API,
+            Data = new SetUserPreferencePayload
+            {
+                Recipient = recipient,
+                EntitlementType = body.EntitlementType,
+                SelectedEntitlementCatalogId = body.SelectedEntitlementCatalogId,
+            },
+        });
+        return NoContent();
     }
 
     /// <summary>Clear equipped selection for one slot (preferences row removed).</summary>
@@ -82,9 +81,11 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeletePreference([FromQuery] UserIdentity recipient, EntitlementType entitlementType)
     {
-        var user = await users.GetOrCreateUser(recipient);
-        await preferencesTable.DeleteSelection(user.Id, entitlementType);
-        cache.InvalidateExperience(user.Id);
+        await bus.Publish(new DeleteUserPreference
+        {
+            Source = EventSource.API,
+            Data = new DeleteUserPreferencePayload { Recipient = recipient, EntitlementType = entitlementType },
+        });
         return NoContent();
     }
 }
