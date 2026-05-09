@@ -3,9 +3,9 @@ namespace Hellbot.Service.Stats;
 public interface IUserStatsReader
 {
     /// <summary>
-    /// Persisted value for one stream bucket; excludes unsent buffer deltas.
+    /// Persisted value for one scope (<see cref="Hellbot.Service.Data.StatScopeBuckets.ForStreamScope"/>); excludes unsent buffer deltas.
     /// </summary>
-    Task<long?> GetForStreamAsync(Guid userId, string statKey, Guid streamSessionId, CancellationToken cancellationToken = default);
+    Task<long?> GetForStreamAsync(Guid userId, string statKey, Guid? streamSessionId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Sum of persisted values for this user and key across all stream buckets.

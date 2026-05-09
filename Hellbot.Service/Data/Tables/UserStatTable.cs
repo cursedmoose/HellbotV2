@@ -52,11 +52,11 @@ public class UserStatTable(IDbConnectionFactory factory)
     public async Task<long?> GetForStreamAsync(
         Guid userId,
         string statKey,
-        Guid streamSessionId,
+        Guid? streamSessionId,
         CancellationToken cancellationToken = default)
     {
         using var connection = factory.CreateConnection();
-        var scopeBucket = StatScopeBuckets.ForStreamSession(streamSessionId);
+        var scopeBucket = StatScopeBuckets.ForStreamScope(streamSessionId);
 
         return await connection.ExecuteScalarAsync<long?>(
             new CommandDefinition(

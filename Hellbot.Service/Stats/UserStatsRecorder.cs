@@ -10,12 +10,12 @@ public sealed class UserStatsRecorder(ILogger<UserStatsRecorder> logger) : IUser
 
     public void Increment(Guid userId, string statKey, long delta = 1, Guid? streamSessionId = null)
     {
-        if (streamSessionId is null || delta == 0)
+        if (delta == 0)
             return;
 
         ArgumentException.ThrowIfNullOrWhiteSpace(statKey);
 
-        var bucket = StatScopeBuckets.ForStreamSession(streamSessionId.Value);
+        var bucket = StatScopeBuckets.ForStreamScope(streamSessionId);
         var key = (userId, statKey, bucket);
 
         lock (_bufferLock)

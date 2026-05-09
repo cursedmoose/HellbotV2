@@ -7,7 +7,7 @@ public sealed class UserStatsReader(UserStatTable table) : IUserStatsReader
     public Task<long?> GetForStreamAsync(
         Guid userId,
         string statKey,
-        Guid streamSessionId,
+        Guid? streamSessionId,
         CancellationToken cancellationToken = default)
         => table.GetForStreamAsync(userId, statKey, streamSessionId, cancellationToken);
 
