@@ -5,18 +5,22 @@ namespace Hellbot.Service.Data.Migrations;
 [Migration(2026050902)]
 public class M013_CreateUserStatCounters : Migration
 {
+    /// <summary>
+    /// SQLite rejects <c>ALTER TABLE … ADD CONSTRAINT … PRIMARY KEY</c> that FluentMigrator emits for a
+    /// separate primary-key constraint. Declare PK inline in CREATE TABLE instead.
+    /// </summary>
     public override void Up()
     {
-        Create.Table("user_stats")
-            .WithColumn("user_id").AsGuid().NotNullable()
-            .WithColumn("stat_key").AsString().NotNullable()
-            .WithColumn("scope").AsString().NotNullable()
-            .WithColumn("value").AsInt64().NotNullable().WithDefaultValue(0)
-            .WithColumn("updated_at").AsDateTime().NotNullable().WithDefaultValue(SystemMethods.CurrentUTCDateTime);
-
-        Create.PrimaryKey("pk_user_stats")
-            .OnTable("user_stats")
-            .Columns("user_id", "stat_key", "scope");
+        Execute.Sql("""
+            CREATE TABLE user_stats (
+              user_id TEXT NOT NULL,
+              stat_key TEXT NOT NULL,
+              scope TEXT NOT NULL,
+              value INTEGER NOT NULL DEFAULT 0,
+              updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (user_id, stat_key, scope)
+            );
+            """);
 
         Create.Index("idx_user_stat_scope_stat")
             .OnTable("user_stats")

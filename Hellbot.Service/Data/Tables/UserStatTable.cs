@@ -8,11 +8,11 @@ public class UserStatTable(IDbConnectionFactory factory)
 {
     private const string UpsertDeltaSql =
         """
-        INSERT INTO user_stat_counters (user_id, stat_key, scope_bucket, value, updated_at)
+        INSERT INTO user_stats (user_id, stat_key, scope, value, updated_at)
         VALUES (@UserId, @StatKey, @ScopeBucket, @Delta, @UpdatedAt)
-        ON CONFLICT (user_id, stat_key, scope_bucket)
+        ON CONFLICT (user_id, stat_key, scope)
         DO UPDATE SET
-            value = user_stat_counters.value + excluded.value,
+            value = user_stats.value + excluded.value,
             updated_at = excluded.updated_at
         """;
 
@@ -62,8 +62,8 @@ public class UserStatTable(IDbConnectionFactory factory)
             new CommandDefinition(
                 """
                 SELECT value
-                FROM user_stat_counters
-                WHERE user_id = @UserId AND stat_key = @StatKey AND scope_bucket = @ScopeBucket
+                FROM user_stats
+                WHERE user_id = @UserId AND stat_key = @StatKey AND scope = @ScopeBucket
                 """,
                 new { UserId = userId, StatKey = statKey, ScopeBucket = scopeBucket },
                 cancellationToken: cancellationToken));
@@ -77,7 +77,7 @@ public class UserStatTable(IDbConnectionFactory factory)
             new CommandDefinition(
                 """
                 SELECT COALESCE(SUM(value), 0)
-                FROM user_stat_counters
+                FROM user_stats
                 WHERE user_id = @UserId AND stat_key = @StatKey
                 """,
                 new { UserId = userId, StatKey = statKey },

@@ -1,7 +1,7 @@
 namespace Hellbot.Service.Data;
 
 /// <summary>
-/// Encodes persisted <c>scope_bucket</c> values for <c>user_stat_counters</c>.
+/// Encodes persisted <c>scope</c> column values for <c>user_stats</c>.
 /// </summary>
 public static class StatScopeBuckets
 {

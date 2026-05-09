@@ -1,7 +1,7 @@
 namespace Hellbot.Core.Stats;
 
 /// <summary>
-/// Canonical stat keys persisted in user_stat_counters. P0 prototype only.
+/// Canonical stat keys persisted in <c>user_stats.stat_key</c>. P0 prototype only.
 /// </summary>
 public static class StatKeys
 {
