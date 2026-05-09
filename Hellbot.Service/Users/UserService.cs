@@ -47,7 +47,7 @@ public sealed class UserService(
         }
     }
 
-    public async Task<User> EnsureUserAsync(UserIdentity snapshot, CancellationToken cancellationToken = default)
+    public async Task<User> GetOrCreateUserAsync(UserIdentity snapshot, CancellationToken cancellationToken = default)
     {
         if (cache.TryGetUser(snapshot, out User? cached))
             return cached;

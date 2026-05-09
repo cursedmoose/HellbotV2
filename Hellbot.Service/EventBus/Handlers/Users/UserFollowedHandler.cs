@@ -19,7 +19,7 @@ namespace Hellbot.Service.EventBus.Handlers.Users
                     Username = evt.Data.FollowerUserName
                 };
 
-            var ensured = await userService.EnsureUserAsync(identity);
+            var ensured = await userService.GetOrCreateUserAsync(identity);
             await userService.TryUpgradeRoleAsync(new UserLocator.HellbotUser(ensured.Id), Role.Member);
         }
     }
