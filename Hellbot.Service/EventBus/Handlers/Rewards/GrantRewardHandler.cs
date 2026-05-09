@@ -1,61 +1,42 @@
 ﻿using Hellbot.Core.Events.Rewards;
-using Hellbot.Service.Data.Tables;
-using Hellbot.Service.Data.Tables.Users;
-using Hellbot.Service.Users;
+using Hellbot.Service.Entitlements;
 
 namespace Hellbot.Service.EventBus.Handlers.Rewards;
 
 public class GrantRewardHandler(
-    UserEntitlementsTable entitlements,
-    EntitlementCatalogTable catalog,
-    IUserService userService,
-    UserCache cache,
+    IEntitlementService entitlements,
     ILogger<GrantRewardHandler> logger) : EventHandlerBase<GrantReward>
 {
-    public async override Task Handle(GrantReward evt)
+    public override async Task Handle(GrantReward evt)
     {
         var catalogItemId = evt.Data.EntitlementCatalogItemId;
-        var catalogItem = await catalog.GetById(catalogItemId);
-        if (catalogItem is null)
-        {
-            logger.LogWarning(
-                "Could not grant catalog item {CatalogItemId}: not found.",
-                catalogItemId);
-            return;
-        }
+        var outcome = await entitlements.TryGrantCatalogRewardAsync(evt.Data.Receiver, catalogItemId);
 
-        if (!catalogItem.IsActive)
+        switch (outcome)
         {
-            logger.LogWarning(
-                "Could not grant catalog item {CatalogItemId}: inactive in catalog.",
-                catalogItemId);
-            return;
-        }
+            case GrantCatalogItemOutcome.Granted:
+                return;
 
-        var rewardReceiver = await userService.GetUserId(evt.Data.Receiver);
-        if (rewardReceiver is not Guid userId)
-        {
-            logger.LogWarning(
-                "Could not grant catalog item {CatalogItemId} to user={User} as they did not exist!",
-                catalogItemId,
-                evt.Data.Receiver);
-            return;
-        }
+            case GrantCatalogItemOutcome.CatalogItemMissing:
+                logger.LogWarning("Could not grant catalog item {CatalogItemId}: not found.", catalogItemId);
+                return;
 
-        var grantResult = await entitlements.Grant(userId, catalogItemId);
-        if (grantResult == UserEntitlementsTable.GrantEntitlementResult.Granted)
-        {
-            cache.InvalidateExperience(userId);
-        }
+            case GrantCatalogItemOutcome.CatalogItemInactive:
+                logger.LogWarning("Could not grant catalog item {CatalogItemId}: inactive in catalog.", catalogItemId);
+                return;
 
-        if (grantResult == UserEntitlementsTable.GrantEntitlementResult.Duplicate)
-        {
-            logger.LogWarning(
-                "Duplicate grant skipped: user={UserId} already has catalog item {CatalogItemId}.",
-                userId,
-                catalogItemId);
-        }
+            case GrantCatalogItemOutcome.UserMissing:
+                logger.LogWarning(
+                    "Could not grant catalog item {CatalogItemId} to user={User} as they did not exist!",
+                    catalogItemId,
+                    evt.Data.Receiver);
+                return;
 
-        return;
+            case GrantCatalogItemOutcome.Duplicate:
+                logger.LogWarning(
+                    "Duplicate grant skipped for user identity and catalog item {CatalogItemId}.",
+                    catalogItemId);
+                return;
+        }
     }
 }

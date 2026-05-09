@@ -13,6 +13,7 @@ using Hellbot.Service.Config;
 using Hellbot.Service.Data;
 using Hellbot.Service.Data.Migrations;
 using Hellbot.Service.Data.Tables;
+using Hellbot.Service.Entitlements;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.Status;
@@ -126,6 +127,7 @@ builder.Services.Scan(scan => scan
     .WithScopedLifetime());
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEntitlementService, EntitlementService>();
 
 // Middleware runs in registration order; enrich context before EventLogger so logs include Context.Stream.
 builder.Services.AddScoped<IEventMiddleware, StreamSessionContextEnricher>();

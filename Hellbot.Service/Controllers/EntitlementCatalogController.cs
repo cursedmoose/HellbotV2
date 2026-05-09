@@ -1,12 +1,12 @@
 using Hellbot.Core.Entitlements;
-using Hellbot.Service.Data.Tables;
+using Hellbot.Service.Entitlements;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers;
 
 [Route("api/entitlements")]
 [ApiController]
-public class EntitlementCatalogController(EntitlementCatalogTable catalog) : ControllerBase
+public class EntitlementCatalogController(IEntitlementService entitlements) : ControllerBase
 {
     public record CreateEntitlementCatalogItemRequest
     {
@@ -30,8 +30,8 @@ public class EntitlementCatalogController(EntitlementCatalogTable catalog) : Con
             IsActive = true,
         };
 
-        var inserted = await catalog.TryInsert(item);
-        if (inserted == EntitlementCatalogTable.CatalogInsertResult.DuplicateKey)
+        var inserted = await entitlements.TryCreateCatalogItemAsync(item);
+        if (inserted == CreateCatalogItemResult.DuplicateKey)
             return Conflict();
 
         return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
@@ -40,21 +40,21 @@ public class EntitlementCatalogController(EntitlementCatalogTable catalog) : Con
     [HttpGet("type/{entitlementType}")]
     public async Task<ActionResult<IReadOnlyList<EntitlementCatalogItem>>> GetByType(EntitlementType entitlementType)
     {
-        var rows = await catalog.GetByType(entitlementType);
+        var rows = await entitlements.GetCatalogByTypeAsync(entitlementType);
         return Ok(rows);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<EntitlementCatalogItem>> GetById(Guid id)
     {
-        var row = await catalog.GetById(id);
+        var row = await entitlements.GetCatalogByIdAsync(id);
         return row is null ? NotFound() : row;
     }
 
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> SetActive(Guid id, [FromBody] SetCatalogItemActiveRequest body)
     {
-        var updated = await catalog.SetIsActive(id, body.IsActive);
+        var updated = await entitlements.SetCatalogItemActiveAsync(id, body.IsActive);
         return updated == 0 ? NotFound() : NoContent();
     }
 }

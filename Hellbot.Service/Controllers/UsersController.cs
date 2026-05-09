@@ -3,8 +3,7 @@ using Hellbot.Core.Events;
 using Hellbot.Core.Events.Preferences;
 using Hellbot.Core.Events.Rewards;
 using Hellbot.Core.Users;
-using Hellbot.Service.Data.Tables.Users;
-using Hellbot.Service.Users;
+using Hellbot.Service.Entitlements;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers;
@@ -12,11 +11,7 @@ namespace Hellbot.Service.Controllers;
 /// <summary>User entitlement grants + equipped preference slots (experience snapshot).</summary>
 [Route("api/users")]
 [ApiController]
-public class UsersController(
-    IEventBus bus,
-    IUserService users,
-    UserPreferencesTable preferencesTable,
-    UserEntitlementsTable entitlements) : ControllerBase
+public class UsersController(IEventBus bus, IEntitlementService entitlements) : ControllerBase
 {
     public sealed record UpsertUserPreferenceRequest
     {
@@ -36,15 +31,12 @@ public class UsersController(
     [ProducesResponseType(typeof(UserCapabilitiesResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<UserCapabilitiesResponse>> GetCapabilities([FromQuery] UserIdentity recipient)
     {
-        var user = await users.GetOrCreateUser(recipient);
-        var granted = await entitlements.GetAll(user.Id);
-        var experience = await preferencesTable.ResolveExperienceAsync(user.Id);
-
+        var snap = await entitlements.GetCapabilitiesAsync(recipient);
         return Ok(new UserCapabilitiesResponse
         {
-            UserId = user.Id,
-            Entitlements = granted,
-            Experience = experience,
+            UserId = snap.UserId,
+            Entitlements = snap.Entitlements,
+            Experience = snap.Experience,
         });
     }
 
