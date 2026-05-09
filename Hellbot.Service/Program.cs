@@ -19,6 +19,7 @@ using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.Status;
 using Hellbot.Service.EventBus.Middleware;
 using Hellbot.Service.EventBus.Producers;
+using Hellbot.Service.Stats;
 using Hellbot.Service.Tts;
 using Hellbot.Service.Users;
 using OBSWebsocketDotNet;
@@ -68,6 +69,7 @@ builder.Services.Configure<DbOptions>(builder.Configuration.GetSection("Database
 builder.Services.Configure<WhisperOptions>(builder.Configuration.GetSection("Whisper"));
 builder.Services.Configure<PlayniteOptions>(builder.Configuration.GetSection("Playnite"));
 builder.Services.Configure<StreamSessionOptions>(builder.Configuration.GetSection("StreamSession"));
+builder.Services.Configure<UserStatsOptions>(builder.Configuration.GetSection("UserStats"));
 
 
 SqlMapper.AddTypeHandler(new SqliteGuidTypeHandler());
@@ -128,6 +130,11 @@ builder.Services.Scan(scan => scan
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEntitlementService, EntitlementService>();
+
+builder.Services.AddSingleton<UserStatsRecorder>();
+builder.Services.AddSingleton<IUserStatsRecorder>(static sp => sp.GetRequiredService<UserStatsRecorder>());
+builder.Services.AddScoped<IUserStatsReader, UserStatsReader>();
+builder.Services.AddHostedService<UserStatsFlushWorker>();
 
 // Middleware runs in registration order; enrich context before EventLogger so logs include Context.Stream.
 builder.Services.AddScoped<IEventMiddleware, StreamSessionContextEnricher>();
