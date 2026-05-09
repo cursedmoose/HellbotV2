@@ -104,23 +104,6 @@ public sealed class UserService(
         return true;
     }
 
-    public Task<User> GetOrCreateUser(UserIdentity identity) => EnsureUserAsync(identity);
-
-    public async Task UpdateUserRoleAsync(UserIdentity identity, Role targetRole)
-    {
-        var user = await EnsureUserAsync(identity);
-        await TryUpgradeRoleAsync(new UserLocator.HellbotUser(user.Id), targetRole);
-    }
-
-    public Task<bool> UpdateUserRoleForUserAsync(Guid userId, Role targetRole) =>
-        TryUpgradeRoleAsync(new UserLocator.HellbotUser(userId), targetRole);
-
-    public async Task<Guid?> GetUserId(UserIdentity identity)
-    {
-        var result = await ResolveAsync(UserLocator.FromIdentity(identity));
-        return result is UserResolutionResult.Resolved r ? r.HellbotUserId : null;
-    }
-
     private async Task<User> CreateUser(UserIdentity snapshot)
     {
         using var tx = db.Connection.BeginTransaction();

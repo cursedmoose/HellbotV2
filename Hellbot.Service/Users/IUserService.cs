@@ -15,16 +15,4 @@ public interface IUserService
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
 
     Task<bool> TryUpgradeRoleAsync(UserLocator locator, Role targetRole, CancellationToken cancellationToken = default);
-
-    [Obsolete($"{nameof(GetOrCreateUser)} is replaced by {nameof(EnsureUserAsync)}.")]
-    Task<User> GetOrCreateUser(UserIdentity identity);
-
-    [Obsolete($"{nameof(UpdateUserRoleAsync)}: use {nameof(EnsureUserAsync)} then {nameof(TryUpgradeRoleAsync)} ({nameof(UserLocator.FromIdentity)}).")]
-    Task UpdateUserRoleAsync(UserIdentity identity, Role targetRole);
-
-    [Obsolete($"{nameof(UpdateUserRoleForUserAsync)}: use {nameof(TryUpgradeRoleAsync)} ({nameof(UserLocator)}.{nameof(UserLocator.HellbotUser)}, ...).")]
-    Task<bool> UpdateUserRoleForUserAsync(Guid userId, Role targetRole);
-
-    [Obsolete($"{nameof(GetUserId)}: use {nameof(ResolveAsync)} ({nameof(UserLocator.FromIdentity)}, ...).")]
-    Task<Guid?> GetUserId(UserIdentity identity);
 }
