@@ -17,8 +17,8 @@ public class TtsRequestHandler(ITtsQueue ttsQueue, ILogger<TtsRequestHandler> lo
             return;
         }
 
-        var experience = uc.Experience ?? UserExperienceSnapshot.Empty;
-        var voiceItem = experience.GetOrDefault(EntitlementType.TtsVoice);
+        var preferenceSnapshot = uc.PreferenceSnapshot ?? UserPreferenceSnapshot.Empty;
+        var voiceItem = preferenceSnapshot.GetOrDefault(EntitlementType.TtsVoice);
         var voiceId = voiceItem?.EntitlementId;
 
         if (string.IsNullOrEmpty(voiceId))
@@ -30,7 +30,7 @@ public class TtsRequestHandler(ITtsQueue ttsQueue, ILogger<TtsRequestHandler> lo
             return;
         }
 
-        var avatarItem = experience.GetOrDefault(EntitlementType.TtsAvatar);
+        var avatarItem = preferenceSnapshot.GetOrDefault(EntitlementType.TtsAvatar);
         var sceneCandidate = avatarItem?.EntitlementId;
         var ttsRequest = new TtsRequest
         {

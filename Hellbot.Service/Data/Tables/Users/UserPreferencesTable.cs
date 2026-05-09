@@ -57,7 +57,7 @@ public class UserPreferencesTable(IDbContext db)
             transaction: tx);
     }
 
-    public async Task<UserExperienceSnapshot> ResolveExperienceAsync(Guid userId, IDbTransaction? tx = null)
+    public async Task<UserPreferenceSnapshot> ResolvePreferencesAsync(Guid userId, IDbTransaction? tx = null)
     {
         var rows = await db.Connection.QueryAsync<EntitlementCatalogItem>(
             """
@@ -84,8 +84,8 @@ public class UserPreferencesTable(IDbContext db)
         }
 
         if (map is null || map.Count == 0)
-            return UserExperienceSnapshot.Empty;
+            return UserPreferenceSnapshot.Empty;
 
-        return new UserExperienceSnapshot { Selections = new ReadOnlyDictionary<EntitlementType, EntitlementCatalogItem>(map) };
+        return new UserPreferenceSnapshot { Selections = new ReadOnlyDictionary<EntitlementType, EntitlementCatalogItem>(map) };
     }
 }

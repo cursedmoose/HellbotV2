@@ -17,17 +17,17 @@ public sealed class EntitlementService(
     {
         var user = await userService.GetOrCreateUserAsync(identity);
         var granted = await userEntitlements.GetAll(user.Id);
-        var experience = await preferencesTable.ResolveExperienceAsync(user.Id);
-        return new UserCapabilitySnapshot(user.Id, granted, experience);
+        var preferenceSnapshot = await preferencesTable.ResolvePreferencesAsync(user.Id);
+        return new UserCapabilitySnapshot(user.Id, granted, preferenceSnapshot);
     }
 
-    public async Task<UserExperienceSnapshot> GetOrLoadExperienceSnapshotAsync(Guid userId)
+    public async Task<UserPreferenceSnapshot> GetOrLoadPreferencesAsync(Guid userId)
     {
-        if (cache.TryGetExperience(userId, out var cached))
+        if (cache.TryGetPreferences(userId, out var cached))
             return cached;
 
-        var resolved = await preferencesTable.ResolveExperienceAsync(userId);
-        cache.SetExperience(userId, resolved);
+        var resolved = await preferencesTable.ResolvePreferencesAsync(userId);
+        cache.SetPreferences(userId, resolved);
         return resolved;
     }
 
@@ -55,14 +55,14 @@ public sealed class EntitlementService(
     {
         var user = await userService.GetOrCreateUserAsync(recipient);
         await preferencesTable.UpsertValidatedSelection(user.Id, entitlementType, selectedCatalogItemId);
-        cache.InvalidateExperience(user.Id);
+        cache.InvalidatePreferences(user.Id);
     }
 
     public async Task ClearEquippedPreferenceForIdentityAsync(UserIdentity recipient, EntitlementType entitlementType)
     {
         var user = await userService.GetOrCreateUserAsync(recipient);
         await preferencesTable.DeleteSelection(user.Id, entitlementType);
-        cache.InvalidateExperience(user.Id);
+        cache.InvalidatePreferences(user.Id);
     }
 
     public async Task<GrantCatalogItemOutcome> TryGrantCatalogEntitlementAsync(
@@ -81,7 +81,7 @@ public sealed class EntitlementService(
         var grantResult = await userEntitlements.Grant(user.Id, entitlementCatalogItemId);
         if (grantResult == UserEntitlementsTable.GrantEntitlementResult.Granted)
         {
-            cache.InvalidateExperience(user.Id);
+            cache.InvalidatePreferences(user.Id);
             return GrantCatalogItemOutcome.Granted;
         }
 

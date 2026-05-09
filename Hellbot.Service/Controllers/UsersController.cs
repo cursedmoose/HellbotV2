@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers;
 
-/// <summary>User entitlement grants + equipped preference slots (experience snapshot).</summary>
+/// <summary>User entitlement grants + equipped preference slots (preference snapshot).</summary>
 [Route("api/users")]
 [ApiController]
 public class UsersController(IEventBus bus, IEntitlementService entitlements, IUserService userService) : ControllerBase
@@ -35,7 +35,7 @@ public class UsersController(IEventBus bus, IEntitlementService entitlements, IU
     {
         public required Guid UserId { get; init; }
         public required IReadOnlyList<UserEntitlement> Entitlements { get; init; }
-        public required UserExperienceSnapshot Experience { get; init; }
+        public required UserPreferenceSnapshot PreferenceSnapshot { get; init; }
     }
 
     /// <summary>Granted catalog rows + resolved equipped selections.</summary>
@@ -48,7 +48,7 @@ public class UsersController(IEventBus bus, IEntitlementService entitlements, IU
         {
             UserId = snap.UserId,
             Entitlements = snap.Entitlements,
-            Experience = snap.Experience,
+            PreferenceSnapshot = snap.PreferenceSnapshot,
         });
     }
 

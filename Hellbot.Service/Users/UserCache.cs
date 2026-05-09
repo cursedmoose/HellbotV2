@@ -10,7 +10,7 @@ public class UserCache
 {
     private readonly ConcurrentDictionary<(PlatformSource Platform, string PlatformAccountId), Guid> _platformToHellbotUserId = new();
     private readonly ConcurrentDictionary<Guid, User> _users = new();
-    private readonly ConcurrentDictionary<Guid, UserExperienceSnapshot> _experienceSnapshots = new();
+    private readonly ConcurrentDictionary<Guid, UserPreferenceSnapshot> _preferences = new();
 
     public static (PlatformSource Platform, string PlatformAccountId) PlatformAccountKey(UserIdentity identity) =>
         (identity.Platform, identity.UserId);
@@ -45,20 +45,20 @@ public class UserCache
     public bool TryGetUser(Guid hellbotUserId, [MaybeNullWhen(false)] out User user) =>
         _users.TryGetValue(hellbotUserId, out user);
 
-    public bool TryGetExperience(Guid hellbotUserId, [MaybeNullWhen(false)] out UserExperienceSnapshot snapshot) =>
-        _experienceSnapshots.TryGetValue(hellbotUserId, out snapshot);
+    public bool TryGetPreferences(Guid hellbotUserId, [MaybeNullWhen(false)] out UserPreferenceSnapshot snapshot) =>
+        _preferences.TryGetValue(hellbotUserId, out snapshot);
 
-    public void SetExperience(Guid hellbotUserId, UserExperienceSnapshot snapshot) =>
-        _experienceSnapshots[hellbotUserId] = snapshot;
+    public void SetPreferences(Guid hellbotUserId, UserPreferenceSnapshot snapshot) =>
+        _preferences[hellbotUserId] = snapshot;
 
     /// <summary>Call when preferences change or entitlement grants revoke equipment validity.</summary>
-    public void InvalidateExperience(Guid hellbotUserId) =>
-        _experienceSnapshots.TryRemove(hellbotUserId, out _);
+    public void InvalidatePreferences(Guid hellbotUserId) =>
+        _preferences.TryRemove(hellbotUserId, out _);
 
     public void InvalidateUser(Guid hellbotUserId)
     {
         _users.TryRemove(hellbotUserId, out _);
-        _experienceSnapshots.TryRemove(hellbotUserId, out _);
+        _preferences.TryRemove(hellbotUserId, out _);
 
         var keys = _platformToHellbotUserId
             .Where(kvp => kvp.Value == hellbotUserId)

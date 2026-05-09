@@ -21,13 +21,13 @@ public enum GrantCatalogItemOutcome
 public sealed record UserCapabilitySnapshot(
     Guid UserId,
     IReadOnlyList<UserEntitlement> Entitlements,
-    UserExperienceSnapshot Experience);
+    UserPreferenceSnapshot PreferenceSnapshot);
 
 public interface IEntitlementService
 {
     Task<UserCapabilitySnapshot> GetCapabilitiesAsync(UserIdentity identity);
 
-    Task<UserExperienceSnapshot> GetOrLoadExperienceSnapshotAsync(Guid userId);
+    Task<UserPreferenceSnapshot> GetOrLoadPreferencesAsync(Guid userId);
 
     Task<CreateCatalogItemResult> TryCreateCatalogItemAsync(EntitlementCatalogItem item);
 

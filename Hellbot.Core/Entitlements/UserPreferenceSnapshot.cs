@@ -3,13 +3,13 @@ using System.Collections.ObjectModel;
 namespace Hellbot.Core.Entitlements;
 
 /// <summary>
-/// Resolved entitlement selections usable at event handling time (e.g. equipped TTS voice/scene catalog rows).
+/// Resolved entitlement selections (equipped preferences) usable at event handling time (e.g. equipped TTS voice/scene catalog rows).
 /// </summary>
-public sealed record UserExperienceSnapshot
+public sealed record UserPreferenceSnapshot
 {
     private static readonly ReadOnlyDictionary<EntitlementType, EntitlementCatalogItem> EmptySelections = new(new Dictionary<EntitlementType, EntitlementCatalogItem>());
 
-    public static UserExperienceSnapshot Empty { get; } = new() { Selections = EmptySelections };
+    public static UserPreferenceSnapshot Empty { get; } = new() { Selections = EmptySelections };
 
     /// <summary>At most one entry per <see cref="EntitlementType"/>.</summary>
     public required IReadOnlyDictionary<EntitlementType, EntitlementCatalogItem> Selections { get; init; }

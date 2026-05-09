@@ -132,7 +132,7 @@ builder.Services.AddScoped<IEntitlementService, EntitlementService>();
 // Middleware runs in registration order; enrich context before EventLogger so logs include Context.Stream.
 builder.Services.AddScoped<IEventMiddleware, StreamSessionContextEnricher>();
 builder.Services.AddScoped<IEventMiddleware, UserContextEnricher>();
-builder.Services.AddScoped<IEventMiddleware, UserExperienceEnricher>();
+builder.Services.AddScoped<IEventMiddleware, UserPreferenceEnricher>();
 builder.Services.AddScoped<IEventMiddleware, EventLogger>();
 
 // Producers

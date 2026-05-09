@@ -22,6 +22,6 @@ namespace Hellbot.Core.Events
     {
         public required UserIdentity Identity { get; set; }
         public User? Info { get; set; }
-        public UserExperienceSnapshot? Experience { get; set; }
+        public UserPreferenceSnapshot? PreferenceSnapshot { get; set; }
     }
 }
