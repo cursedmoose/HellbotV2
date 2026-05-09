@@ -51,6 +51,21 @@ namespace Hellbot.Service.Users
             cache.SetUser(updated);
         }
 
+        public async Task<bool> UpdateUserRoleForUserAsync(Guid userId, Role targetRole)
+        {
+            var user = await users.Get(userId);
+            if (user is null)
+                return false;
+
+            if (user.Role >= targetRole)
+                return true;
+
+            var updated = user with { Role = targetRole };
+            await users.Update(updated);
+            cache.SetUser(updated);
+            return true;
+        }
+
         private async Task<User> CreateUser(UserIdentity identity)
         {
             using var tx = db.Connection.BeginTransaction();

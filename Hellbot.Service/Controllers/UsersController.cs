@@ -4,6 +4,7 @@ using Hellbot.Core.Events.Preferences;
 using Hellbot.Core.Events.Rewards;
 using Hellbot.Core.Users;
 using Hellbot.Service.Entitlements;
+using Hellbot.Service.Users;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers;
@@ -11,8 +12,14 @@ namespace Hellbot.Service.Controllers;
 /// <summary>User entitlement grants + equipped preference slots (experience snapshot).</summary>
 [Route("api/users")]
 [ApiController]
-public class UsersController(IEventBus bus, IEntitlementService entitlements) : ControllerBase
+public class UsersController(IEventBus bus, IEntitlementService entitlements, IUserService userService) : ControllerBase
 {
+    public sealed record GrantRoleRequest
+    {
+        /// <summary>Internal <c>users.id</c> (not platform account id).</summary>
+        public required Guid UserId { get; init; }
+        public required Role Role { get; init; }
+    }
     public sealed record UpsertUserPreferenceRequest
     {
         public required EntitlementType EntitlementType { get; init; }
@@ -65,6 +72,23 @@ public class UsersController(IEventBus bus, IEntitlementService entitlements) : 
                 SelectedEntitlementCatalogId = body.SelectedEntitlementCatalogId,
             },
         });
+        return NoContent();
+    }
+
+    /// <summary>Upgrade a user's <see cref="Role"/> by internal user id if below the target.</summary>
+    [HttpPost("role")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GrantRole([FromBody] GrantRoleRequest body)
+    {
+        if (body.UserId == Guid.Empty || body.Role == Role.None)
+            return BadRequest();
+
+        var updated = await userService.UpdateUserRoleForUserAsync(body.UserId, body.Role);
+        if (!updated)
+            return NotFound();
+
         return NoContent();
     }
 
