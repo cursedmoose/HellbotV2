@@ -1,97 +1,152 @@
-﻿using Hellbot.Core.Users;
+﻿using Hellbot.Core.Events;
+using Hellbot.Core.Users;
+using Hellbot.Service.Users.Identity;
 using Hellbot.Service.Data;
 using Hellbot.Service.Data.Tables.Users;
 
-namespace Hellbot.Service.Users
+namespace Hellbot.Service.Users;
+
+public sealed class UserService(
+    IDbContext db,
+    UserTable users,
+    UserIdentitiesTable identities,
+    UserCache cache,
+    ILogger<UserService> logger) : IUserService
 {
-    public class UserService(
-        IDbContext db,
-        UserTable users,
-        UserIdentitiesTable identities,
-        UserCache cache,
-        ILogger<UserService> logger) : IUserService
+    private const int UsernameAmbiguityProbeLimit = 3;
+
+    public Task<User?> GetAsync(Guid hellbotUserId, CancellationToken cancellationToken = default) =>
+        users.Get(hellbotUserId);
+
+    public async Task<UserResolutionResult> ResolveAsync(UserLocator locator, CancellationToken cancellationToken = default)
     {
-        public async Task<User> GetOrCreateUser(UserIdentity identity)
+        switch (locator)
         {
-            if (cache.TryGetUser(identity, out User? cacheUser)) return cacheUser;
-
-            var userId = await identities.GetUserId(identity.Platform, identity.UserId);
-
-            if (userId is not Guid id)
+            case UserLocator.HellbotUser(Guid id):
             {
-                logger.LogInformation("User not found for {Platform}:{PlatformUserId}. Creating new user.", identity.Platform, identity.UserId);
-                return await CreateUser(identity);
+                var row = await users.Get(id);
+                return row is null ? new UserResolutionResult.NotFound() : new UserResolutionResult.Resolved(id);
             }
-
-            cache.MapIdentity(identity, id);
-            if (!cache.TryGetUser(id, out User? existingUser))
+            case UserLocator.PlatformAccount(PlatformSource platform, string platformAccountId):
             {
-                existingUser = await users.Get(id);
-
-                if (existingUser is null)
-                {
-                    logger.LogError("Data inconsistency: Identity({Platform}:${UserId} exists but user {UserId} is missing. Manual repair required.", identity.Platform, identity.UserId, id);
-                    throw new InvalidOperationException($"Missing user for identity {id}");
-                }
-
-                cache.SetUser(existingUser);
+                var id = await identities.GetUserId(platform, platformAccountId);
+                return id is null ? new UserResolutionResult.NotFound() : new UserResolutionResult.Resolved(id.Value);
             }
-
-            return existingUser;
-        }
-
-        public async Task UpdateUserRoleAsync(UserIdentity identity, Role targetRole)
-        {
-            var user = await GetOrCreateUser(identity);
-            if (user.Role >= targetRole)
-                return;
-
-            var updated = user with { Role = targetRole };
-            await users.Update(updated);
-            cache.SetUser(updated);
-        }
-
-        public async Task<bool> UpdateUserRoleForUserAsync(Guid userId, Role targetRole)
-        {
-            var user = await users.Get(userId);
-            if (user is null)
-                return false;
-
-            if (user.Role >= targetRole)
-                return true;
-
-            var updated = user with { Role = targetRole };
-            await users.Update(updated);
-            cache.SetUser(updated);
-            return true;
-        }
-
-        private async Task<User> CreateUser(UserIdentity identity)
-        {
-            using var tx = db.Connection.BeginTransaction();
-            try
+            case UserLocator.PlatformUsername(PlatformSource platform, string username):
             {
-                var user = new User
+                var ids = await identities.GetHellbotUserIdsByUsernameAsync(platform, username, UsernameAmbiguityProbeLimit);
+                return ids.Count switch
                 {
-                    Role = Role.User
+                    0 => new UserResolutionResult.NotFound(),
+                    1 => new UserResolutionResult.Resolved(ids[0]),
+                    _ => new UserResolutionResult.AmbiguousUsername(ids),
                 };
-
-                await users.Create(user, tx);
-                await identities.Create(user, identity, tx);
-                tx.Commit();
-                cache.MapIdentity(identity, user);
-                return user;
             }
-            catch
-            {
-                tx.Rollback();
-                throw;
-            }
+            default:
+                throw new InvalidOperationException($"Unhandled {nameof(UserLocator)}: {locator.GetType().Name}");
         }
+    }
 
-        public async Task<Guid?> GetUserId(UserIdentity userIdentity)
+    public async Task<User> EnsureUserAsync(UserIdentity snapshot, CancellationToken cancellationToken = default)
+    {
+        if (cache.TryGetUser(snapshot, out User? cached))
+            return cached;
+
+        var userIdFromDb = await identities.GetUserId(snapshot.Platform, snapshot.UserId);
+
+        if (userIdFromDb is not Guid idFromDb)
         {
-            return await identities.GetUserId(userIdentity.Platform, userIdentity.UserId);
+            logger.LogInformation("User not found for {Platform}:{PlatformUserId}. Creating new user.",
+                snapshot.Platform, snapshot.UserId);
+            return await CreateUser(snapshot);
         }
+
+        cache.MapHellbotUserId(snapshot, idFromDb);
+        if (!cache.TryGetUser(idFromDb, out User? existingUser))
+        {
+            existingUser = await users.Get(idFromDb);
+
+            if (existingUser is null)
+            {
+                logger.LogError(
+                    "Data inconsistency: Identity({Platform}:{PlatformUserId} exists but Hellbot user {UserId} is missing. Manual repair required.",
+                    snapshot.Platform, snapshot.UserId, idFromDb);
+                throw new InvalidOperationException($"Missing user for identity {idFromDb}");
+            }
+
+            cache.SetUser(existingUser);
+        }
+
+        return existingUser;
+    }
+
+    public Task UpdateAsync(User user, CancellationToken cancellationToken = default) =>
+        UpdateUserAndInvalidateCache(user);
+
+    public async Task<bool> TryUpgradeRoleAsync(UserLocator locator, Role targetRole, CancellationToken cancellationToken = default)
+    {
+        var resolved = await ResolveAsync(locator, cancellationToken);
+
+        if (resolved is not UserResolutionResult.Resolved r)
+            return false;
+
+        var hellbotUserId = r.HellbotUserId;
+
+        var user = await users.Get(hellbotUserId);
+        if (user is null)
+            return false;
+
+        if (user.Role >= targetRole)
+            return true;
+
+        var upgraded = user with { Role = targetRole };
+        await UpdateUserAndInvalidateCache(upgraded);
+        return true;
+    }
+
+    public Task<User> GetOrCreateUser(UserIdentity identity) => EnsureUserAsync(identity);
+
+    public async Task UpdateUserRoleAsync(UserIdentity identity, Role targetRole)
+    {
+        var user = await EnsureUserAsync(identity);
+        await TryUpgradeRoleAsync(new UserLocator.HellbotUser(user.Id), targetRole);
+    }
+
+    public Task<bool> UpdateUserRoleForUserAsync(Guid userId, Role targetRole) =>
+        TryUpgradeRoleAsync(new UserLocator.HellbotUser(userId), targetRole);
+
+    public async Task<Guid?> GetUserId(UserIdentity identity)
+    {
+        var result = await ResolveAsync(UserLocator.FromIdentity(identity));
+        return result is UserResolutionResult.Resolved r ? r.HellbotUserId : null;
+    }
+
+    private async Task<User> CreateUser(UserIdentity snapshot)
+    {
+        using var tx = db.Connection.BeginTransaction();
+        try
+        {
+            var user = new User
+            {
+                Role = Role.User,
+            };
+
+            await users.Create(user, tx);
+            await identities.Create(user, snapshot, tx);
+            tx.Commit();
+            cache.MapHellbotUserId(snapshot, user);
+            return user;
+        }
+        catch
+        {
+            tx.Rollback();
+            throw;
+        }
+    }
+
+    private async Task UpdateUserAndInvalidateCache(User user)
+    {
+        await users.Update(user);
+        cache.SetUser(user);
     }
 }

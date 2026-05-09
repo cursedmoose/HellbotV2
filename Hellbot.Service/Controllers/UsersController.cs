@@ -3,6 +3,7 @@ using Hellbot.Core.Events;
 using Hellbot.Core.Events.Preferences;
 using Hellbot.Core.Events.Entitlements;
 using Hellbot.Core.Users;
+using Hellbot.Service.Users.Identity;
 using Hellbot.Service.Entitlements;
 using Hellbot.Service.Users;
 using Microsoft.AspNetCore.Mvc;
@@ -16,8 +17,12 @@ public class UsersController(IEventBus bus, IEntitlementService entitlements, IU
 {
     public sealed record GrantRoleRequest
     {
-        /// <summary>Internal <c>users.id</c> (not platform account id).</summary>
-        public required Guid UserId { get; init; }
+        /// <summary>Prefer this: polymorphic JSON with <c>$kind</c>: <c>HellbotUser</c>, <c>PlatformAccount</c>, or <c>PlatformUsername</c>.</summary>
+        public UserLocator? Recipient { get; init; }
+
+        /// <summary>Fallback for existing clients: internal <c>users.id</c> when <see cref="Recipient"/> is omitted.</summary>
+        public Guid? UserId { get; init; }
+
         public required Role Role { get; init; }
     }
     public sealed record UpsertUserPreferenceRequest
@@ -75,21 +80,39 @@ public class UsersController(IEventBus bus, IEntitlementService entitlements, IU
         return NoContent();
     }
 
-    /// <summary>Upgrade a user's <see cref="Role"/> by internal user id if below the target.</summary>
+    /// <summary>Upgrade role if currently below target. Use polymorphic <see cref="GrantRoleRequest.Recipient"/> or legacy <see cref="GrantRoleRequest.UserId"/>.</summary>
     [HttpPost("role")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> GrantRole([FromBody] GrantRoleRequest body)
     {
-        if (body.UserId == Guid.Empty || body.Role == Role.None)
+        if (body.Recipient is not null && body.UserId is Guid uidBoth && uidBoth != Guid.Empty)
+            return BadRequest("Specify only one of Recipient or UserId.");
+
+        UserLocator? locator = body.Recipient;
+        if (locator is null && body.UserId is Guid uidFallback && uidFallback != Guid.Empty)
+            locator = new UserLocator.HellbotUser(uidFallback);
+
+        if (locator is null || body.Role == Role.None)
             return BadRequest();
 
-        var updated = await userService.UpdateUserRoleForUserAsync(body.UserId, body.Role);
-        if (!updated)
-            return NotFound();
+        switch (await userService.ResolveAsync(locator))
+        {
+            case UserResolutionResult.NotFound:
+                return NotFound();
 
-        return NoContent();
+            case UserResolutionResult.AmbiguousUsername a:
+                return Conflict(new { message = "Multiple Hellbot users match this username.", candidates = a.CandidateHellbotUserIds });
+
+            case UserResolutionResult.Resolved resolved:
+                var upgraded = await userService.TryUpgradeRoleAsync(new UserLocator.HellbotUser(resolved.HellbotUserId), body.Role);
+                return upgraded ? NoContent() : NotFound();
+
+            default:
+                throw new InvalidOperationException($"{nameof(UserResolutionResult)} exhaustive switch failure.");
+        }
     }
 
     /// <summary>Clear equipped selection for one slot (preferences row removed).</summary>

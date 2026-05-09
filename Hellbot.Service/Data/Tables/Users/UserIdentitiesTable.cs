@@ -40,6 +40,30 @@ namespace Hellbot.Service.Data.Tables.Users
             });
         }
 
+        /// <summary>Returns up to <paramref name="maxCandidates"/> Hellbot user ids matching platform + stored username snapshot.</summary>
+        public async Task<IReadOnlyList<Guid>> GetHellbotUserIdsByUsernameAsync(
+            PlatformSource platform,
+            string username,
+            int maxCandidates = 3)
+        {
+            var rows = (await db.Connection.QueryAsync<Guid>(@"
+                SELECT user_id
+                FROM user_identities
+                WHERE platform = @Platform
+                  AND platform_user_name = @Username
+                LIMIT @Limit
+            ",
+                new
+                {
+                    Platform = platform.ToString(),
+                    Username = username,
+                    Limit = maxCandidates,
+                }))
+                .AsList();
+
+            return rows;
+        }
+
         public async Task<IReadOnlyList<UserIdentity>> Get(Guid userId)
         {
             return (await db.Connection.QueryAsync<UserIdentity>(@"

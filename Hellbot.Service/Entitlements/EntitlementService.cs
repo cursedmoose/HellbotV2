@@ -15,7 +15,7 @@ public sealed class EntitlementService(
 {
     public async Task<UserCapabilitySnapshot> GetCapabilitiesAsync(UserIdentity identity)
     {
-        var user = await userService.GetOrCreateUser(identity);
+        var user = await userService.EnsureUserAsync(identity);
         var granted = await userEntitlements.GetAll(user.Id);
         var experience = await preferencesTable.ResolveExperienceAsync(user.Id);
         return new UserCapabilitySnapshot(user.Id, granted, experience);
@@ -53,14 +53,14 @@ public sealed class EntitlementService(
         EntitlementType entitlementType,
         Guid selectedCatalogItemId)
     {
-        var user = await userService.GetOrCreateUser(recipient);
+        var user = await userService.EnsureUserAsync(recipient);
         await preferencesTable.UpsertValidatedSelection(user.Id, entitlementType, selectedCatalogItemId);
         cache.InvalidateExperience(user.Id);
     }
 
     public async Task ClearEquippedPreferenceForIdentityAsync(UserIdentity recipient, EntitlementType entitlementType)
     {
-        var user = await userService.GetOrCreateUser(recipient);
+        var user = await userService.EnsureUserAsync(recipient);
         await preferencesTable.DeleteSelection(user.Id, entitlementType);
         cache.InvalidateExperience(user.Id);
     }
@@ -76,14 +76,12 @@ public sealed class EntitlementService(
         if (!catalogItem.IsActive)
             return GrantCatalogItemOutcome.CatalogItemInactive;
 
-        var resolvedUserId = await userService.GetUserId(recipient);
-        if (resolvedUserId is not Guid userId)
-            return GrantCatalogItemOutcome.UserMissing;
+        var user = await userService.EnsureUserAsync(recipient);
 
-        var grantResult = await userEntitlements.Grant(userId, entitlementCatalogItemId);
+        var grantResult = await userEntitlements.Grant(user.Id, entitlementCatalogItemId);
         if (grantResult == UserEntitlementsTable.GrantEntitlementResult.Granted)
         {
-            cache.InvalidateExperience(userId);
+            cache.InvalidateExperience(user.Id);
             return GrantCatalogItemOutcome.Granted;
         }
 

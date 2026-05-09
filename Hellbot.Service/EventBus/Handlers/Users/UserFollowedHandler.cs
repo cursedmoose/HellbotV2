@@ -1,6 +1,7 @@
 using Hellbot.Core.Events;
 using Hellbot.Core.Events.Users;
 using Hellbot.Core.Users;
+using Hellbot.Service.Users.Identity;
 using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.Users;
 
@@ -8,7 +9,7 @@ namespace Hellbot.Service.EventBus.Handlers.Users
 {
     public class UserFollowedHandler(IUserService userService) : EventHandlerBase<UserFollowed>
     {
-        public override Task Handle(UserFollowed evt)
+        public override async Task Handle(UserFollowed evt)
         {
             UserIdentity identity = evt.Context.User?.Identity
                 ?? new UserIdentity
@@ -18,7 +19,8 @@ namespace Hellbot.Service.EventBus.Handlers.Users
                     Username = evt.Data.FollowerUserName
                 };
 
-            return userService.UpdateUserRoleAsync(identity, Role.Member);
+            var ensured = await userService.EnsureUserAsync(identity);
+            await userService.TryUpgradeRoleAsync(new UserLocator.HellbotUser(ensured.Id), Role.Member);
         }
     }
 }

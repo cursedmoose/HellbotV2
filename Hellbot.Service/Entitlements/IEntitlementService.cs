@@ -14,7 +14,6 @@ public enum GrantCatalogItemOutcome
 {
     CatalogItemMissing,
     CatalogItemInactive,
-    UserMissing,
     Granted,
     Duplicate,
 }

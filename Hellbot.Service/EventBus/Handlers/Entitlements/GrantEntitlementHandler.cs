@@ -25,13 +25,6 @@ public class GrantEntitlementHandler(
                 logger.LogWarning("Could not grant catalog item {CatalogItemId}: inactive in catalog.", catalogItemId);
                 return;
 
-            case GrantCatalogItemOutcome.UserMissing:
-                logger.LogWarning(
-                    "Could not grant catalog item {CatalogItemId} to user={User} as they did not exist!",
-                    catalogItemId,
-                    evt.Data.Receiver);
-                return;
-
             case GrantCatalogItemOutcome.Duplicate:
                 logger.LogWarning(
                     "Duplicate grant skipped for user identity and catalog item {CatalogItemId}.",

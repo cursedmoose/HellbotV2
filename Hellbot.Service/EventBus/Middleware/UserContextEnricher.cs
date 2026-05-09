@@ -9,7 +9,7 @@ namespace Hellbot.Service.EventBus.Middleware
         {
             if (evt.Context.User is UserContext uc)
             {
-                var user = await userService.GetOrCreateUser(uc.Identity);
+                var user = await userService.EnsureUserAsync(uc.Identity);
                 evt.Context = evt.Context with
                 {
                     User = uc with { Info = user },
