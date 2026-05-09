@@ -1,16 +1,16 @@
-﻿using Hellbot.Core.Events.Rewards;
+using Hellbot.Core.Events.Entitlements;
 using Hellbot.Service.Entitlements;
 
-namespace Hellbot.Service.EventBus.Handlers.Rewards;
+namespace Hellbot.Service.EventBus.Handlers.Entitlements;
 
-public class GrantRewardHandler(
+public class GrantEntitlementHandler(
     IEntitlementService entitlements,
-    ILogger<GrantRewardHandler> logger) : EventHandlerBase<GrantReward>
+    ILogger<GrantEntitlementHandler> logger) : EventHandlerBase<GrantEntitlement>
 {
-    public override async Task Handle(GrantReward evt)
+    public override async Task Handle(GrantEntitlement evt)
     {
         var catalogItemId = evt.Data.EntitlementCatalogItemId;
-        var outcome = await entitlements.TryGrantCatalogRewardAsync(evt.Data.Receiver, catalogItemId);
+        var outcome = await entitlements.TryGrantCatalogEntitlementAsync(evt.Data.Receiver, catalogItemId);
 
         switch (outcome)
         {

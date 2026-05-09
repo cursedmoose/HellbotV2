@@ -1,7 +1,7 @@
 using Hellbot.Core.Entitlements;
 using Hellbot.Core.Events;
 using Hellbot.Core.Events.Preferences;
-using Hellbot.Core.Events.Rewards;
+using Hellbot.Core.Events.Entitlements;
 using Hellbot.Core.Users;
 using Hellbot.Service.Entitlements;
 using Hellbot.Service.Users;
@@ -47,13 +47,13 @@ public class UsersController(IEventBus bus, IEntitlementService entitlements, IU
         });
     }
 
-    /// <summary>Grant a catalog entitlement to a user via the reward pipeline (<see cref="GrantReward"/>).</summary>
-    /// <remarks>Same behavior as POST <c>/api/rewards</c>; use whichever route suits your caller.</remarks>
+    /// <summary>Grant a catalog entitlement to a user by publishing <see cref="GrantEntitlement"/>.</summary>
+    /// <remarks>Endpoint: <c>POST /api/users/entitlements</c>.</remarks>
     [HttpPost("entitlements")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GrantEntitlement([FromBody] GrantRewardPayload payload)
+    public async Task<IActionResult> GrantEntitlement([FromBody] GrantEntitlementPayload payload)
     {
-        await bus.Publish(new GrantReward { Source = EventSource.API, Data = payload });
+        await bus.Publish(new GrantEntitlement { Source = EventSource.API, Data = payload });
         return Ok();
     }
 

@@ -45,7 +45,7 @@ public interface IEntitlementService
 
     Task ClearEquippedPreferenceForIdentityAsync(UserIdentity recipient, EntitlementType entitlementType);
 
-    Task<GrantCatalogItemOutcome> TryGrantCatalogRewardAsync(
+    Task<GrantCatalogItemOutcome> TryGrantCatalogEntitlementAsync(
         UserIdentity recipient,
         Guid entitlementCatalogItemId);
 }

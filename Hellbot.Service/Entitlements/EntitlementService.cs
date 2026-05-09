@@ -65,7 +65,7 @@ public sealed class EntitlementService(
         cache.InvalidateExperience(user.Id);
     }
 
-    public async Task<GrantCatalogItemOutcome> TryGrantCatalogRewardAsync(
+    public async Task<GrantCatalogItemOutcome> TryGrantCatalogEntitlementAsync(
         UserIdentity recipient,
         Guid entitlementCatalogItemId)
     {
@@ -76,8 +76,8 @@ public sealed class EntitlementService(
         if (!catalogItem.IsActive)
             return GrantCatalogItemOutcome.CatalogItemInactive;
 
-        var rewardReceiver = await userService.GetUserId(recipient);
-        if (rewardReceiver is not Guid userId)
+        var resolvedUserId = await userService.GetUserId(recipient);
+        if (resolvedUserId is not Guid userId)
             return GrantCatalogItemOutcome.UserMissing;
 
         var grantResult = await userEntitlements.Grant(userId, entitlementCatalogItemId);
