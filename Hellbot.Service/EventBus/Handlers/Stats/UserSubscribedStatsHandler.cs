@@ -1,4 +1,3 @@
-using Hellbot.Core.Events;
 using Hellbot.Core.Events.Users;
 using Hellbot.Core.Stats;
 using Hellbot.Service.Stats;
@@ -9,10 +8,10 @@ public sealed class UserSubscribedStatsHandler(IUserStatsRecorder stats) : Event
 {
     public override Task Handle(UserSubscribed evt)
     {
-        if (evt.Context.User is not UserContext uc || uc.Info is not { } user)
+        if (!evt.Context.TryGetPersistedUser(out var user))
             return Task.CompletedTask;
 
-        stats.Increment(user.Id, StatKeys.TimesSubscribed, streamSessionId: evt.Context.Stream?.Id);
+        stats.Increment(user.Id, StatKeys.TimesSubscribed, streamSessionId: evt.Context.StreamSessionId);
         return Task.CompletedTask;
     }
 }

@@ -1,4 +1,3 @@
-using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
 using Hellbot.Core.Stats;
 using Hellbot.Service.Stats;
@@ -10,10 +9,10 @@ public sealed class CommandRequestedStatsHandler(IUserStatsRecorder stats)
 {
     public override Task Handle(CommandRequested evt)
     {
-        if (evt.Context.User is not UserContext uc || uc.Info is not { } user)
+        if (!evt.Context.TryGetPersistedUser(out var user))
             return Task.CompletedTask;
 
-        stats.Increment(user.Id, StatKeys.CommandsUsed, streamSessionId: evt.Context.Stream?.Id);
+        stats.Increment(user.Id, StatKeys.CommandsUsed, streamSessionId: evt.Context.StreamSessionId);
         return Task.CompletedTask;
     }
 }

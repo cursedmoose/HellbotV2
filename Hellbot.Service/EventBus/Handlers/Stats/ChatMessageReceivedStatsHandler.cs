@@ -1,4 +1,3 @@
-using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
 using Hellbot.Core.Stats;
 using Hellbot.Service.Stats;
@@ -9,10 +8,10 @@ public sealed class ChatMessageReceivedStatsHandler(IUserStatsRecorder stats) : 
 {
     public override Task Handle(ChatMessageReceived evt)
     {
-        if (evt.Context.User is not UserContext uc || uc.Info is not { } user)
+        if (!evt.Context.TryGetPersistedUser(out var user))
             return Task.CompletedTask;
 
-        stats.Increment(user.Id, StatKeys.ChatMessagesSent, streamSessionId: evt.Context.Stream?.Id);
+        stats.Increment(user.Id, StatKeys.ChatMessagesSent, streamSessionId: evt.Context.StreamSessionId);
         return Task.CompletedTask;
     }
 }

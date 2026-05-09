@@ -11,12 +11,13 @@ public class TtsRequestHandler(ITtsQueue ttsQueue, ILogger<TtsRequestHandler> lo
 {
     public override async Task Handle(TtsRequested evt)
     {
-        if (evt.Context.User is not UserContext uc || uc.Info is not User user)
+        if (evt.Context.EnrichedUserContext is not {} uc)
         {
             logger.LogDebug("Skipping TTS request={RequestId}. No enriched user context.", evt.Id);
             return;
         }
 
+        var user = uc.Info!;
         var preferenceSnapshot = uc.PreferenceSnapshot ?? UserPreferenceSnapshot.Empty;
         var voiceItem = preferenceSnapshot.GetOrDefault(EntitlementType.TtsVoice);
         var voiceId = voiceItem?.EntitlementId;
