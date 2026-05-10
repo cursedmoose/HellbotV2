@@ -1,5 +1,6 @@
 ﻿using Hellbot.Core.Events;
 using Hellbot.Service.Users;
+using Hellbot.Service.Users.Identity;
 
 namespace Hellbot.Service.EventBus.Middleware
 {
@@ -9,11 +10,15 @@ namespace Hellbot.Service.EventBus.Middleware
         {
             if (evt.Context.User is UserContext uc)
             {
-                var user = await userService.GetOrCreateUserAsync(uc.Identity);
-                evt.Context = evt.Context with
+                var result = await userService.ResolveAsync(uc.Locator);
+                if (result is UserResolutionResult.Resolved resolved)
                 {
-                    User = uc with { Info = user },
-                };
+                    var user = await userService.GetAsync(resolved.HellbotUserId);
+                    evt.Context = evt.Context with
+                    {
+                        User = uc with { Info = user },
+                    };
+                }
             }
 
             return;

@@ -31,8 +31,19 @@ namespace Hellbot.Service.EventBus.Handlers.Global
 
         private static UserIdentity? TryGetUserIdentity(EventContext context)
         {
-            var u = context.User;
-            return u.HasValue ? u.Value.Identity : null;
+            if (context.User is not UserContext uc)
+                return null;
+
+            return uc.Locator switch
+            {
+                UserLocator.PlatformAccount(var platform, var platformAccountId) => new UserIdentity
+                {
+                    Platform = platform,
+                    UserId = platformAccountId,
+                    Username = null
+                },
+                _ => null
+            };
         }
     }
 }

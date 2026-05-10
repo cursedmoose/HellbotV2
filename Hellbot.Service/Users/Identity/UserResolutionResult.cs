@@ -1,6 +1,6 @@
 namespace Hellbot.Service.Users.Identity;
 
-/// <summary>Outcome of resolving a <see cref="UserLocator"/> to a Hellbot user id.</summary>
+/// <summary>Outcome of resolving a <see cref="Hellbot.Core.Users.UserLocator"/> to a Hellbot user id.</summary>
 public abstract record UserResolutionResult
 {
     public sealed record Resolved(Guid HellbotUserId) : UserResolutionResult;

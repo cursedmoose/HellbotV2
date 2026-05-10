@@ -10,7 +10,7 @@ namespace Hellbot.Core.Events
         public UserContext? User { get; set; }
         public StreamSessionSnapshot? Stream { get; set; }
 
-        /// <summary>Whether <see cref="User"/> is present with identity.</summary>
+        /// <summary>Whether <see cref="User"/> is present with a <see cref="UserContext.Locator"/>.</summary>
         public readonly bool HasUserContext =>
             User is UserContext;
 
@@ -33,18 +33,16 @@ namespace Hellbot.Core.Events
             return user is not null;
         }
 
-        public static EventContext From(UserIdentity identity)
-        {
-            return new EventContext()
-            {
-                User = new UserContext() { Identity = identity }
-            };
-        }
+        public static EventContext From(UserIdentity identity) =>
+            From(UserLocator.FromIdentity(identity));
+
+        public static EventContext From(UserLocator locator) =>
+            new EventContext { User = new UserContext { Locator = locator } };
     }
 
     public record struct UserContext
     {
-        public required UserIdentity Identity { get; set; }
+        public required UserLocator Locator { get; set; }
         public User? Info { get; set; }
         public UserPreferenceSnapshot? PreferenceSnapshot { get; set; }
     }

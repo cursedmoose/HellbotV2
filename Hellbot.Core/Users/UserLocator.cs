@@ -1,8 +1,7 @@
-using Hellbot.Core.Events;
-using Hellbot.Core.Users;
 using System.Text.Json.Serialization;
+using Hellbot.Core.Events;
 
-namespace Hellbot.Service.Users.Identity;
+namespace Hellbot.Core.Users;
 
 /// <summary>Ways to address a Hellbot user for resolution (internal id, immutable platform account id, or mutable username).</summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$kind")]
