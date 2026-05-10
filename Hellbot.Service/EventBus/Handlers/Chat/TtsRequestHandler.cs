@@ -1,7 +1,7 @@
 ﻿using Hellbot.Core.Entitlements;
 using Hellbot.Core.Events;
-using Hellbot.Core.Events.Chat;
-using Hellbot.Core.TTS;
+using Hellbot.Core.Events.Tts;
+using Hellbot.Core.Tts;
 using Hellbot.Core.Users;
 
 namespace Hellbot.Service.EventBus.Handlers.Chat;

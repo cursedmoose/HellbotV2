@@ -1,4 +1,4 @@
-namespace Hellbot.Core.TTS
+namespace Hellbot.Core.Tts
 {
     public record TtsRequest
     {

@@ -1,4 +1,4 @@
-﻿using Hellbot.Core.TTS;
+﻿using Hellbot.Core.Tts;
 
 namespace Hellbot.Service.Tts
 {

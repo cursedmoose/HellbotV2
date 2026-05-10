@@ -1,4 +1,4 @@
-﻿using Hellbot.Core.TTS;
+﻿using Hellbot.Core.Tts;
 using Hellbot.Service.Data.Tables;
 using Microsoft.AspNetCore.Mvc;
 

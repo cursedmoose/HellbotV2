@@ -1,5 +1,6 @@
 ﻿using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
+using Hellbot.Core.Events.Tts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers

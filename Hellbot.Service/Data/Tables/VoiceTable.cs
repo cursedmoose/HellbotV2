@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using Hellbot.Core.TTS;
+using Hellbot.Core.Tts;
 using System.Text.Json;
 
 namespace Hellbot.Service.Data.Tables

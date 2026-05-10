@@ -1,6 +1,6 @@
-using Hellbot.Core.TTS;
+using Hellbot.Core.Tts;
 
-namespace Hellbot.Core.Events.Chat
+namespace Hellbot.Core.Events.Tts
 {
     public record EnqueueTts : HellbotEvent<TtsRequest>;
 }
