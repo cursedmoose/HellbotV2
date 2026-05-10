@@ -3,10 +3,18 @@ using Hellbot.Service.Entitlements;
 
 namespace Hellbot.Service.EventBus.Handlers.Preferences;
 
-public sealed class DeleteUserPreferenceHandler(IEntitlementService entitlements) : EventHandlerBase<DeleteUserPreference>
+public sealed class DeleteUserPreferenceHandler(
+    IEntitlementService entitlements,
+    ILogger<DeleteUserPreferenceHandler> logger) : EventHandlerBase<DeleteUserPreference>
 {
-    public override Task Handle(DeleteUserPreference evt)
+    public override async Task Handle(DeleteUserPreference evt)
     {
-        return entitlements.ClearEquippedPreferenceForIdentityAsync(evt.Data.Recipient, evt.Data.EntitlementType);
+        if (!evt.Context.TryGetPersistedUser(out var user))
+        {
+            logger.LogWarning("DeleteUserPreference skipped for event={EventId}. No persisted user context.", evt.Id);
+            return;
+        }
+
+        await entitlements.ClearEquippedPreferenceAsync(user.Id, evt.Data.EntitlementType);
     }
 }

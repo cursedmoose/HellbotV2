@@ -63,14 +63,13 @@ namespace Hellbot.Service.Controllers
         /// <summary>Set which granted catalog row is equipped for an <see cref="EntitlementType"/> slot.</summary>
         [HttpPut("preferences")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> PutPreference([FromQuery] UserIdentity recipient, [FromBody] UpsertUserPreferenceRequest body)
+        public async Task<IActionResult> PutPreference([FromBody] UpsertUserPreferenceRequest body)
         {
             await PublishEvent(new SetUserPreference
             {
                 Source = EventSource.API,
                 Data = new SetUserPreferencePayload
                 {
-                    Recipient = recipient,
                     EntitlementType = body.EntitlementType,
                     SelectedEntitlementCatalogId = body.SelectedEntitlementCatalogId,
                 },
@@ -116,12 +115,12 @@ namespace Hellbot.Service.Controllers
         /// <summary>Clear equipped selection for one slot (preferences row removed).</summary>
         [HttpDelete("preferences/{entitlementType}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> DeletePreference([FromQuery] UserIdentity recipient, EntitlementType entitlementType)
+        public async Task<IActionResult> DeletePreference(EntitlementType entitlementType)
         {
             await PublishEvent(new DeleteUserPreference
             {
                 Source = EventSource.API,
-                Data = new DeleteUserPreferencePayload { Recipient = recipient, EntitlementType = entitlementType },
+                Data = new DeleteUserPreferencePayload { EntitlementType = entitlementType },
             });
             return NoContent();
         }

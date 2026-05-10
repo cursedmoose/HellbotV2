@@ -37,12 +37,9 @@ public interface IEntitlementService
 
     Task<int> SetCatalogItemActiveAsync(Guid id, bool isActive);
 
-    Task UpsertEquippedPreferenceForIdentityAsync(
-        UserIdentity recipient,
-        EntitlementType entitlementType,
-        Guid selectedCatalogItemId);
+    Task UpsertEquippedPreferenceAsync(Guid hellbotUserId, EntitlementType entitlementType, Guid selectedCatalogItemId);
 
-    Task ClearEquippedPreferenceForIdentityAsync(UserIdentity recipient, EntitlementType entitlementType);
+    Task ClearEquippedPreferenceAsync(Guid hellbotUserId, EntitlementType entitlementType);
 
     Task<GrantCatalogItemOutcome> TryGrantCatalogEntitlementAsync(
         UserIdentity recipient,

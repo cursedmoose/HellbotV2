@@ -48,21 +48,19 @@ public sealed class EntitlementService(
     public Task<int> SetCatalogItemActiveAsync(Guid id, bool isActive)
         => catalog.SetIsActive(id, isActive);
 
-    public async Task UpsertEquippedPreferenceForIdentityAsync(
-        UserIdentity recipient,
+    public async Task UpsertEquippedPreferenceAsync(
+        Guid hellbotUserId,
         EntitlementType entitlementType,
         Guid selectedCatalogItemId)
     {
-        var user = await userService.GetOrCreateUserAsync(recipient);
-        await preferencesTable.UpsertValidatedSelection(user.Id, entitlementType, selectedCatalogItemId);
-        cache.InvalidatePreferences(user.Id);
+        await preferencesTable.UpsertValidatedSelection(hellbotUserId, entitlementType, selectedCatalogItemId);
+        cache.InvalidatePreferences(hellbotUserId);
     }
 
-    public async Task ClearEquippedPreferenceForIdentityAsync(UserIdentity recipient, EntitlementType entitlementType)
+    public async Task ClearEquippedPreferenceAsync(Guid hellbotUserId, EntitlementType entitlementType)
     {
-        var user = await userService.GetOrCreateUserAsync(recipient);
-        await preferencesTable.DeleteSelection(user.Id, entitlementType);
-        cache.InvalidatePreferences(user.Id);
+        await preferencesTable.DeleteSelection(hellbotUserId, entitlementType);
+        cache.InvalidatePreferences(hellbotUserId);
     }
 
     public async Task<GrantCatalogItemOutcome> TryGrantCatalogEntitlementAsync(
