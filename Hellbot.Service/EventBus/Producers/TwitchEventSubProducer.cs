@@ -292,8 +292,6 @@ namespace Hellbot.Service.EventBus.Producers
                 Context = CreateContext(ev.UserId, ev.UserName),
                 Data = new()
                 {
-                    FollowerUserId = ev.UserId,
-                    FollowerUserName = ev.UserName,
                     FollowedAt = ev.FollowedAt,
                 },
                 Source = EventSource.Twitch
@@ -311,8 +309,6 @@ namespace Hellbot.Service.EventBus.Producers
                 Context = CreateContext(ev.UserId, ev.UserName),
                 Data = new()
                 {
-                    SubscriberUserId = ev.UserId,
-                    SubscriberUserName = ev.UserName,
                     Tier = ev.Tier,
                 },
                 Source = EventSource.Twitch
