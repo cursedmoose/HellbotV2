@@ -1,4 +1,5 @@
 ﻿using System.Threading.Channels;
+using Hellbot.Core.TTS;
 
 namespace Hellbot.Service.Tts
 {

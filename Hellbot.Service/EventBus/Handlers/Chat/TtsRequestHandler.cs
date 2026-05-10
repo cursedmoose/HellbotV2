@@ -3,11 +3,10 @@ using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
 using Hellbot.Core.TTS;
 using Hellbot.Core.Users;
-using Hellbot.Service.Tts;
 
 namespace Hellbot.Service.EventBus.Handlers.Chat;
 
-public class TtsRequestHandler(ITtsQueue ttsQueue, ILogger<TtsRequestHandler> logger) : EventHandlerBase<TtsRequested>
+public class TtsRequestHandler(IEventBus bus, ILogger<TtsRequestHandler> logger) : EventHandlerBase<TtsRequested>
 {
     public override async Task Handle(TtsRequested evt)
     {
@@ -42,7 +41,11 @@ public class TtsRequestHandler(ITtsQueue ttsQueue, ILogger<TtsRequestHandler> lo
             SceneId = string.IsNullOrEmpty(sceneCandidate) ? null : sceneCandidate,
         };
 
-        await ttsQueue.EnqueueAsync(ttsRequest);
-        logger.LogInformation("Enqueued request={RequestId}. Queue length={Length}", evt.Id, ttsQueue.Length());
+        await bus.Publish(new EnqueueTts
+        {
+            Data = ttsRequest,
+            Source = EventSource.Internal with { Channel = "TtsRequestHandler" },
+            Context = evt.Context,
+        });
     }
 }

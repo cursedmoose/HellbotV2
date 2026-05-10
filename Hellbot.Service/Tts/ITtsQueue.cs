@@ -1,4 +1,4 @@
-﻿using Hellbot.Core.Events.Chat;
+﻿using Hellbot.Core.TTS;
 
 namespace Hellbot.Service.Tts
 {

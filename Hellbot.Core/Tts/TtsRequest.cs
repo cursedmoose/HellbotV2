@@ -1,6 +1,4 @@
-﻿using Hellbot.Core.TTS;
-
-namespace Hellbot.Service.Tts
+namespace Hellbot.Core.TTS
 {
     public record TtsRequest
     {
