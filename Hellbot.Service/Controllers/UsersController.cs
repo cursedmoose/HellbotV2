@@ -105,7 +105,7 @@ namespace Hellbot.Service.Controllers
                     return Conflict(new { message = "Multiple Hellbot users match this username.", candidates = a.CandidateHellbotUserIds });
 
                 case UserResolutionResult.Resolved resolved:
-                    var upgraded = await userService.TryUpgradeRoleAsync(new UserLocator.HellbotUser(resolved.HellbotUserId), body.Role);
+                    var upgraded = await userService.TryUpgradeRoleAsync(resolved.HellbotUserId, body.Role);
                     return upgraded ? NoContent() : NotFound();
 
                 default:

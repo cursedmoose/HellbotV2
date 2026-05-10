@@ -22,28 +22,10 @@ namespace Hellbot.Service.EventBus.Handlers.Global
                 Type = evt.GetType().Name,
                 Timestamp = evt.Timestamp,
                 Source = evt.Source,
-                User = TryGetUserIdentity(evt.Context),
                 Data = JsonSerializer.SerializeToElement(dataValue, dataValue.GetType()),
             };
 
             return hubContext.Clients.All.SendAsync("ReceiveEvent", message);
-        }
-
-        private static UserIdentity? TryGetUserIdentity(EventContext context)
-        {
-            if (context.User is not UserContext uc)
-                return null;
-
-            return uc.Locator switch
-            {
-                UserLocator.PlatformAccount(var platform, var platformAccountId) => new UserIdentity
-                {
-                    Platform = platform,
-                    UserId = platformAccountId,
-                    Username = null
-                },
-                _ => null
-            };
         }
     }
 }

@@ -8,10 +8,10 @@ public sealed class ChatMessageReceivedStatsHandler(IUserStatsRecorder stats) : 
 {
     public override Task Handle(ChatMessageReceived evt)
     {
-        if (!evt.Context.TryGetPersistedUser(out var user))
+        if (!evt.Context.TryGetUser(out var user))
             return Task.CompletedTask;
 
-        stats.Increment(user.Id, StatKeys.ChatMessagesSent, streamSessionId: evt.Context.StreamSessionId);
+        stats.Increment(user.Id, StatKeys.ChatMessagesSent, streamSessionId: evt.Context.Stream?.Id);
         return Task.CompletedTask;
     }
 }

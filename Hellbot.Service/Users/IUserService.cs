@@ -14,5 +14,5 @@ public interface IUserService
 
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
 
-    Task<bool> TryUpgradeRoleAsync(UserLocator locator, Role targetRole, CancellationToken cancellationToken = default);
+    Task<bool> TryUpgradeRoleAsync(Guid userId, Role targetRole, CancellationToken cancellationToken = default);
 }

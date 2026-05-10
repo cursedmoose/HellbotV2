@@ -1,5 +1,6 @@
 ﻿using Hellbot.Core.Entitlements;
 using Hellbot.Core.Events;
+using Hellbot.Core.Events.Context;
 using Hellbot.Core.Events.Tts;
 using Hellbot.Core.Tts;
 using Hellbot.Core.Users;
@@ -10,7 +11,7 @@ public class TtsRequestHandler(IEventBus bus, ILogger<TtsRequestHandler> logger)
 {
     public override async Task Handle(TtsRequested evt)
     {
-        if (evt.Context.EnrichedUserContext is not {} uc)
+        if (evt.Context.User is not UserContext uc)
         {
             logger.LogDebug("Skipping TTS request={RequestId}. No enriched user context.", evt.Id);
             return;

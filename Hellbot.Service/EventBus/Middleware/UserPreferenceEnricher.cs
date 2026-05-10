@@ -1,4 +1,5 @@
 using Hellbot.Core.Events;
+using Hellbot.Core.Events.Context;
 using Hellbot.Core.Users;
 using Hellbot.Service.Entitlements;
 

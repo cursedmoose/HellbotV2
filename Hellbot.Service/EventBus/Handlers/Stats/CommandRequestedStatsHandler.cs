@@ -9,10 +9,10 @@ public sealed class CommandRequestedStatsHandler(IUserStatsRecorder stats)
 {
     public override Task Handle(CommandRequested evt)
     {
-        if (!evt.Context.TryGetPersistedUser(out var user))
+        if (!evt.Context.TryGetUser(out var user))
             return Task.CompletedTask;
 
-        stats.Increment(user.Id, StatKeys.CommandsUsed, streamSessionId: evt.Context.StreamSessionId);
+        stats.Increment(user.Id, StatKeys.CommandsUsed, streamSessionId: evt.Context.Stream?.Id);
         return Task.CompletedTask;
     }
 }

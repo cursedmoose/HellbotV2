@@ -1,4 +1,5 @@
 ﻿using Hellbot.Core.Events;
+using Hellbot.Core.Events.Context;
 using Hellbot.Core.Events.Chat;
 using Hellbot.Core.Events.Session;
 using Hellbot.Core.Events.Users;
@@ -196,7 +197,7 @@ namespace Hellbot.Service.EventBus.Producers
                 UserId = userId,
                 Username = userName
             };
-            return EventContext.From(identity);
+            return new EventContext { Sender = new SenderContext { Identity = identity } };
         }
 
         private async Task OnChannelChatMessage(object? sender, ChannelChatMessageArgs e)

@@ -83,16 +83,9 @@ public sealed class UserService(
     public Task UpdateAsync(User user, CancellationToken cancellationToken = default) =>
         UpdateUserAndInvalidateCache(user);
 
-    public async Task<bool> TryUpgradeRoleAsync(UserLocator locator, Role targetRole, CancellationToken cancellationToken = default)
+    public async Task<bool> TryUpgradeRoleAsync(Guid userId, Role targetRole, CancellationToken cancellationToken = default)
     {
-        var resolved = await ResolveAsync(locator, cancellationToken);
-
-        if (resolved is not UserResolutionResult.Resolved r)
-            return false;
-
-        var hellbotUserId = r.HellbotUserId;
-
-        var user = await users.Get(hellbotUserId);
+        var user = await users.Get(userId);
         if (user is null)
             return false;
 

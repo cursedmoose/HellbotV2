@@ -9,7 +9,7 @@ public sealed class DeleteUserPreferenceHandler(
 {
     public override async Task Handle(DeleteUserPreference evt)
     {
-        if (!evt.Context.TryGetPersistedUser(out var user))
+        if (!evt.Context.TryGetUser(out var user))
         {
             logger.LogWarning("DeleteUserPreference skipped for event={EventId}. No persisted user context.", evt.Id);
             return;

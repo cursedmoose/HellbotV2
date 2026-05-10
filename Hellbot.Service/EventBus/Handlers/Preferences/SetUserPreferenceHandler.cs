@@ -9,7 +9,7 @@ public sealed class SetUserPreferenceHandler(
 {
     public override async Task Handle(SetUserPreference evt)
     {
-        if (!evt.Context.TryGetPersistedUser(out var user))
+        if (!evt.Context.TryGetUser(out var user))
         {
             logger.LogWarning("SetUserPreference skipped for event={EventId}. No persisted user context.", evt.Id);
             return;

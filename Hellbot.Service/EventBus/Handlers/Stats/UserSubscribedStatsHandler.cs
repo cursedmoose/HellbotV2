@@ -8,10 +8,10 @@ public sealed class UserSubscribedStatsHandler(IUserStatsRecorder stats) : Event
 {
     public override Task Handle(UserSubscribed evt)
     {
-        if (!evt.Context.TryGetPersistedUser(out var user))
+        if (!evt.Context.TryGetUser(out var user))
             return Task.CompletedTask;
 
-        stats.Increment(user.Id, StatKeys.TimesSubscribed, streamSessionId: evt.Context.StreamSessionId);
+        stats.Increment(user.Id, StatKeys.TimesSubscribed, streamSessionId: evt.Context.Stream?.Id);
         return Task.CompletedTask;
     }
 }

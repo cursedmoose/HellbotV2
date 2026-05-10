@@ -1,4 +1,5 @@
 using Hellbot.Core.Events;
+using Hellbot.Core.Events.Context;
 using Hellbot.Core.Users;
 using Microsoft.AspNetCore.Http;
 
@@ -29,9 +30,15 @@ namespace Hellbot.Service.Controllers.Filters
                 return "Specify only one of asHellbotUserId or asTwitchLogin.";
 
             if (hellbotId.HasValue)
-                context = EventContext.From(new UserLocator.HellbotUser(hellbotId.Value));
+                context = new EventContext
+                {
+                    Sender = new SenderContext { Locator = new UserLocator.HellbotUser(hellbotId.Value) },
+                };
             else if (twitchLogin is not null)
-                context = EventContext.From(new UserLocator.PlatformUsername(PlatformSource.Twitch, twitchLogin));
+                context = new EventContext
+                {
+                    Sender = new SenderContext { Locator = new UserLocator.PlatformUsername(PlatformSource.Twitch, twitchLogin) },
+                };
 
             return null;
         }
