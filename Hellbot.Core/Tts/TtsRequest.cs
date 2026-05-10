@@ -4,8 +4,8 @@ namespace Hellbot.Core.Tts
     {
         public required Guid RequestId { get; init; }
         public required string Message { get; init; }
-        public required string VoiceId { get; init; }
-        public VoiceSettings VoiceSettings { get; init; } = new();
+        public required string VoiceKey { get; init; }
+        public VoiceSettings? VoiceSettings { get; init; }
         public string? SceneId { get; init; }
     }
 }

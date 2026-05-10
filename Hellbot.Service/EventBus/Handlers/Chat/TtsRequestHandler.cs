@@ -20,9 +20,9 @@ public class TtsRequestHandler(IEventBus bus, ILogger<TtsRequestHandler> logger)
         var user = uc.Info!;
         var preferenceSnapshot = uc.PreferenceSnapshot ?? UserPreferenceSnapshot.Empty;
         var voiceItem = preferenceSnapshot.GetOrDefault(EntitlementType.TtsVoice);
-        var voiceId = voiceItem?.EntitlementId;
+        var voiceKey = voiceItem?.EntitlementId;
 
-        if (string.IsNullOrEmpty(voiceId))
+        if (string.IsNullOrEmpty(voiceKey))
         {
             logger.LogDebug(
                 "Skipping TTS request={RequestId} User={UserId}. No TtsVoice equipped.",
@@ -37,8 +37,8 @@ public class TtsRequestHandler(IEventBus bus, ILogger<TtsRequestHandler> logger)
         {
             RequestId = evt.Id,
             Message = evt.Data.Text,
-            VoiceId = voiceId,
-            VoiceSettings = new VoiceSettings(),
+            VoiceKey = voiceKey,
+            VoiceSettings = null,
             SceneId = string.IsNullOrEmpty(sceneCandidate) ? null : sceneCandidate,
         };
 

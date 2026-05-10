@@ -19,7 +19,7 @@ namespace Hellbot.Service.Tts
                 try
                 {
                     await playbackGate.WaitAsync(stoppingToken);
-                    var audio = await tts.GenerateTts(evt.VoiceId, evt.Message, evt.VoiceSettings, stoppingToken);
+                    var audio = await tts.GenerateTts(evt.VoiceKey, evt.Message, evt.VoiceSettings, stoppingToken);
                     obs.EnableScene(evt.SceneId);
                     await player.PlayAsync(audio, stoppingToken);
                     obs.DisableScene(evt.SceneId);
