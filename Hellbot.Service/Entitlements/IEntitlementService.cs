@@ -1,5 +1,4 @@
 using Hellbot.Core.Entitlements;
-using Hellbot.Core.Users;
 
 namespace Hellbot.Service.Entitlements;
 
@@ -25,7 +24,7 @@ public sealed record UserCapabilitySnapshot(
 
 public interface IEntitlementService
 {
-    Task<UserCapabilitySnapshot> GetCapabilitiesAsync(UserIdentity identity);
+    Task<UserCapabilitySnapshot> GetCapabilitiesAsync(Guid hellbotUserId);
 
     Task<UserPreferenceSnapshot> GetOrLoadPreferencesAsync(Guid userId);
 
@@ -42,6 +41,6 @@ public interface IEntitlementService
     Task ClearEquippedPreferenceAsync(Guid hellbotUserId, EntitlementType entitlementType);
 
     Task<GrantCatalogItemOutcome> TryGrantCatalogEntitlementAsync(
-        UserIdentity recipient,
+        Guid hellbotUserId,
         Guid entitlementCatalogItemId);
 }

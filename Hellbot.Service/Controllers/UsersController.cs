@@ -44,7 +44,8 @@ namespace Hellbot.Service.Controllers
         [ProducesResponseType(typeof(UserCapabilitiesResponse), StatusCodes.Status200OK)]
         public async Task<ActionResult<UserCapabilitiesResponse>> GetCapabilities([FromQuery] UserIdentity recipient)
         {
-            var snap = await entitlements.GetCapabilitiesAsync(recipient);
+            var user = await userService.GetOrCreateUserAsync(recipient);
+            var snap = await entitlements.GetCapabilitiesAsync(user.Id);
             return Ok(new UserCapabilitiesResponse
             {
                 UserId = snap.UserId,

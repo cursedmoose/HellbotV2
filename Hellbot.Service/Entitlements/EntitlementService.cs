@@ -1,5 +1,4 @@
 using Hellbot.Core.Entitlements;
-using Hellbot.Core.Users;
 using Hellbot.Service.Data.Tables;
 using Hellbot.Service.Data.Tables.Users;
 using Hellbot.Service.Users;
@@ -7,18 +6,16 @@ using Hellbot.Service.Users;
 namespace Hellbot.Service.Entitlements;
 
 public sealed class EntitlementService(
-    IUserService userService,
     UserCache cache,
     EntitlementCatalogTable catalog,
     UserEntitlementsTable userEntitlements,
     UserPreferencesTable preferencesTable) : IEntitlementService
 {
-    public async Task<UserCapabilitySnapshot> GetCapabilitiesAsync(UserIdentity identity)
+    public async Task<UserCapabilitySnapshot> GetCapabilitiesAsync(Guid hellbotUserId)
     {
-        var user = await userService.GetOrCreateUserAsync(identity);
-        var granted = await userEntitlements.GetAll(user.Id);
-        var preferenceSnapshot = await preferencesTable.ResolvePreferencesAsync(user.Id);
-        return new UserCapabilitySnapshot(user.Id, granted, preferenceSnapshot);
+        var granted = await userEntitlements.GetAll(hellbotUserId);
+        var preferenceSnapshot = await preferencesTable.ResolvePreferencesAsync(hellbotUserId);
+        return new UserCapabilitySnapshot(hellbotUserId, granted, preferenceSnapshot);
     }
 
     public async Task<UserPreferenceSnapshot> GetOrLoadPreferencesAsync(Guid userId)
@@ -64,7 +61,7 @@ public sealed class EntitlementService(
     }
 
     public async Task<GrantCatalogItemOutcome> TryGrantCatalogEntitlementAsync(
-        UserIdentity recipient,
+        Guid hellbotUserId,
         Guid entitlementCatalogItemId)
     {
         var catalogItem = await catalog.GetById(entitlementCatalogItemId);
@@ -74,12 +71,10 @@ public sealed class EntitlementService(
         if (!catalogItem.IsActive)
             return GrantCatalogItemOutcome.CatalogItemInactive;
 
-        var user = await userService.GetOrCreateUserAsync(recipient);
-
-        var grantResult = await userEntitlements.Grant(user.Id, entitlementCatalogItemId);
+        var grantResult = await userEntitlements.Grant(hellbotUserId, entitlementCatalogItemId);
         if (grantResult == UserEntitlementsTable.GrantEntitlementResult.Granted)
         {
-            cache.InvalidatePreferences(user.Id);
+            cache.InvalidatePreferences(hellbotUserId);
             return GrantCatalogItemOutcome.Granted;
         }
 
