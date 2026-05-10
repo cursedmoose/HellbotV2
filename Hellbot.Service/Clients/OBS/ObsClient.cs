@@ -12,6 +12,7 @@ namespace Hellbot.Service.Clients.OBS
         private readonly ILogger<ObsClient> _logger;
         private readonly ObsOptions _options;
         private readonly Dictionary<string, SceneItem> _scenes;
+        private int _reconnectOwned; // 1 while ReconnectLoopAsync owns reconnect; prevents stacked loops from Disconnected re-entry
 
         public ObsClient(OBSWebsocket obs, IOptions<ObsOptions> options, ILogger<ObsClient> logger)
         {
@@ -42,27 +43,37 @@ namespace Hellbot.Service.Clients.OBS
 
         private void OnDisconnect(object? sender, ObsDisconnectionInfo e)
         {
+            if (Interlocked.CompareExchange(ref _reconnectOwned, 1, 0) != 0)
+                return;
+
             _logger.LogInformation("OBS Websocket disconnected due to {Reason}.", e.DisconnectReason ?? "OBS is not running.");
             _ = ReconnectLoopAsync();
         }
 
         private async Task ReconnectLoopAsync()
         {
-            while (!API.IsConnected)
+            try
             {
-                try
+                while (!API.IsConnected)
                 {
-                    API.ConnectAsync(_options.WebsocketUrl, "");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogDebug(ex, "OBS reconnect attempt failed.");
-                }
+                    try
+                    {
+                        API.ConnectAsync(_options.WebsocketUrl, "");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "OBS reconnect attempt failed.");
+                    }
 
-                if (API.IsConnected)
-                    break;
+                    if (API.IsConnected)
+                        break;
 
-                await Task.Delay(3000);
+                    await Task.Delay(3000);
+                }
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _reconnectOwned, 0);
             }
         }
 
