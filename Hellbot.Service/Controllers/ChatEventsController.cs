@@ -4,40 +4,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers
 {
-    [ApiController]
     public class ChatEventsController(IEventBus bus) : EventController(bus)
     {
         [HttpPost("chat/send")]
-        public async Task<IActionResult> SendChatMessage(
-            SendChatPayload evt,
-            [FromQuery] Guid? asHellbotUserId = null,
-            [FromQuery] string? asTwitchLogin = null)
-        {
-            var hellbotEvt = new SendChatMessage { Data = evt, Source = EventSource.API };
-            var rejection = SeedUserContext(hellbotEvt, asHellbotUserId, asTwitchLogin);
-            return rejection ?? await Publish(hellbotEvt);
-        }
+        public Task<IActionResult> SendChatMessage(SendChatPayload evt)
+            => Publish(new SendChatMessage { Data = evt, Source = EventSource.API });
 
         [HttpPost("chat/receive")]
-        public async Task<IActionResult> ReceiveChatMessage(
-            ChatReceivedPayload evt,
-            [FromQuery] Guid? asHellbotUserId = null,
-            [FromQuery] string? asTwitchLogin = null)
-        {
-            var hellbotEvt = new ChatMessageReceived { Data = evt, Source = EventSource.API };
-            var rejection = SeedUserContext(hellbotEvt, asHellbotUserId, asTwitchLogin);
-            return rejection ?? await Publish(hellbotEvt);
-        }
+        public Task<IActionResult> ReceiveChatMessage(ChatReceivedPayload evt)
+            => Publish(new ChatMessageReceived { Data = evt, Source = EventSource.API });
 
         [HttpPost("tts")]
-        public async Task<IActionResult> TtsMessage(
-            TtsRequestPayload evt,
-            [FromQuery] Guid? asHellbotUserId = null,
-            [FromQuery] string? asTwitchLogin = null)
-        {
-            var hellbotEvt = new TtsRequested { Data = evt, Source = EventSource.API };
-            var rejection = SeedUserContext(hellbotEvt, asHellbotUserId, asTwitchLogin);
-            return rejection ?? await Publish(hellbotEvt);
-        }
+        public Task<IActionResult> TtsMessage(TtsRequestPayload evt)
+            => Publish(new TtsRequested { Data = evt, Source = EventSource.API });
     }
 }

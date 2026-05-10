@@ -1,40 +1,26 @@
 ﻿using Hellbot.Core.Events;
-using Hellbot.Core.Users;
+using Hellbot.Service.Controllers.Filters;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers
 {
-    [Route("api/events")]
+    [IncludeUserContext]
     [ApiController]
-    public abstract class EventController(IEventBus bus) : ControllerBase
+    public abstract class EventPublishingController(IEventBus bus) : ControllerBase
     {
-        protected IActionResult? SeedUserContext(
-            IHellbotEvent evt,
-            Guid? asHellbotUserId,
-            string? asTwitchLogin)
+        protected async Task PublishEvent(IHellbotEvent evt)
         {
-            var twitchLogin = string.IsNullOrWhiteSpace(asTwitchLogin)
-                ? null
-                : asTwitchLogin.Trim();
-            var hasHellbotUserId = asHellbotUserId.HasValue;
-            var hasTwitchLogin = twitchLogin is not null;
-
-            if (hasHellbotUserId && hasTwitchLogin)
-                return BadRequest("Specify only one of asHellbotUserId or asTwitchLogin.");
-
-            if (hasHellbotUserId)
-                evt.Context = EventContext.From(new UserLocator.HellbotUser(asHellbotUserId!.Value));
-            else if (hasTwitchLogin)
-                evt.Context = EventContext.From(
-                    new UserLocator.PlatformUsername(PlatformSource.Twitch, twitchLogin!));
-
-            return null;
+            UserContextSeeder.ApplyPendingToEvent(HttpContext, evt);
+            await bus.Publish(evt);
         }
 
         protected async Task<IActionResult> Publish(IHellbotEvent evt)
         {
-            await bus.Publish(evt);
+            await PublishEvent(evt);
             return Ok();
         }
     }
+
+    [Route("api/events")]
+    public abstract class EventController(IEventBus bus) : EventPublishingController(bus);
 }

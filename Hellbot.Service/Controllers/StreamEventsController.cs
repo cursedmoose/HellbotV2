@@ -4,9 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers
 {
-    [ApiController]
     [Route("stream")]
-    public class StreamEventsController(IEventBus bus): EventController(bus)
+    public class StreamEventsController(IEventBus bus) : EventController(bus)
     {
         [HttpPost("start")]
         public Task<IActionResult> StartStream(StreamStartPayload evt)

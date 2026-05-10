@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers
 {
-    [ApiController]
     [Route("test")]
     public class TestEventController(IEventBus bus) : EventController(bus)
     {

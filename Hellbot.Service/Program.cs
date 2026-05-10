@@ -13,6 +13,7 @@ using Hellbot.Service.Config;
 using Hellbot.Service.Data;
 using Hellbot.Service.Data.Migrations;
 using Hellbot.Service.Data.Tables;
+using Hellbot.Service.Controllers.Filters;
 using Hellbot.Service.Entitlements;
 using Hellbot.Service.EventBus;
 using Hellbot.Service.EventBus.Handlers;
@@ -151,14 +152,15 @@ builder.Services.AddHostedService<MicCaptureService>();
 builder.Services.AddHostedService<PlayniteEventProducer>();
 
 builder.Services.AddSignalR();
-builder.Services.AddControllers()
+builder.Services.AddControllers(o =>
+        o.Filters.Add<UserContextSeedActionFilter>())
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c => c.OperationFilter<IncludeUserContextOperationFilter>());
 
 var app = builder.Build();
 
