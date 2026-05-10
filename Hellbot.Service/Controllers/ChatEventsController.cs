@@ -1,6 +1,5 @@
 ﻿using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
-using Hellbot.Core.Events.Tts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers
@@ -14,9 +13,5 @@ namespace Hellbot.Service.Controllers
         [HttpPost("chat/receive")]
         public Task<IActionResult> ReceiveChatMessage(ChatReceivedPayload evt)
             => Publish(new ChatMessageReceived { Data = evt, Source = EventSource.API });
-
-        [HttpPost("tts")]
-        public Task<IActionResult> TtsMessage(TtsRequestPayload evt)
-            => Publish(new TtsRequested { Data = evt, Source = EventSource.API });
     }
 }
