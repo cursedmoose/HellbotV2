@@ -15,6 +15,9 @@ namespace Hellbot.Service.EventBus.Handlers.Global
 
             var dataProperty = eventType.GetProperty("Data");
             var dataValue = dataProperty?.GetValue(evt)!;
+            UserIdentity? sender = evt.Context.Sender?.Identity;
+            if (sender is null && evt.Context.TryGetUser(out var user))
+                sender = new UserIdentity { Platform = PlatformSource.Hellbot, UserId = user.Id.ToString() };
 
             var message = new HubEventMessage
             {
@@ -22,6 +25,7 @@ namespace Hellbot.Service.EventBus.Handlers.Global
                 Type = evt.GetType().Name,
                 Timestamp = evt.Timestamp,
                 Source = evt.Source,
+                User = sender,
                 Data = JsonSerializer.SerializeToElement(dataValue, dataValue.GetType()),
             };
 
