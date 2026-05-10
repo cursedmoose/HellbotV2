@@ -10,15 +10,10 @@ namespace Hellbot.Service.EventBus.Handlers.Users
     {
         public override async Task Handle(UserFollowed evt)
         {
-            UserIdentity identity = new()
-            {
-                Platform = PlatformSource.Twitch,
-                UserId = evt.Data.FollowerUserId,
-                Username = evt.Data.FollowerUserName
-            };
+            if (evt.Context.User is not UserContext uc)
+                return;
 
-            var ensured = await userService.GetOrCreateUserAsync(identity);
-            await userService.TryUpgradeRoleAsync(new UserLocator.HellbotUser(ensured.Id), Role.Member);
+            await userService.TryUpgradeRoleAsync(uc.Locator, Role.Member);
         }
     }
 }
