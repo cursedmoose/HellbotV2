@@ -1,4 +1,5 @@
-﻿using Hellbot.Core.Scenes;
+﻿using System.Diagnostics.CodeAnalysis;
+using Hellbot.Core.Scenes;
 using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
 using OBSWebsocketDotNet;
@@ -10,25 +11,22 @@ namespace Hellbot.Service.Clients.OBS
     {
         public readonly OBSWebsocket API;
         private readonly ILogger<ObsClient> _logger;
-        private readonly ObsOptions _options;
-        private readonly Dictionary<string, SceneItem> _scenes;
+        private readonly IOptionsMonitor<ObsOptions> _optionsMonitor;
         private int _reconnectOwned; // 1 while ReconnectLoopAsync owns reconnect; prevents stacked loops from Disconnected re-entry
 
-        public ObsClient(OBSWebsocket obs, IOptions<ObsOptions> options, ILogger<ObsClient> logger)
+        public ObsClient(OBSWebsocket obs, IOptionsMonitor<ObsOptions> optionsMonitor, ILogger<ObsClient> logger)
         {
             API = obs;
             _logger = logger;
-            _options = options.Value;
+            _optionsMonitor = optionsMonitor;
 
             obs.Connected += OnConnect;
             obs.Disconnected += OnDisconnect;
-
-            _scenes = SceneManager.GetScenes();
         }
 
         public void Start()
         {
-            API.ConnectAsync(_options.WebsocketUrl, "");
+            API.ConnectAsync(_optionsMonitor.CurrentValue.WebsocketUrl, "");
         }
 
         public void Stop()
@@ -58,7 +56,7 @@ namespace Hellbot.Service.Clients.OBS
                 {
                     try
                     {
-                        API.ConnectAsync(_options.WebsocketUrl, "");
+                        API.ConnectAsync(_optionsMonitor.CurrentValue.WebsocketUrl, "");
                     }
                     catch (Exception ex)
                     {
@@ -81,7 +79,8 @@ namespace Hellbot.Service.Clients.OBS
         {
             if (sceneId is null) return;
 
-            if (_scenes.TryGetValue(sceneId, out var sceneItem))
+            var scenes = _optionsMonitor.CurrentValue.Scenes;
+            if (TryGetSceneItem(scenes, sceneId, out var sceneItem))
             {
                 API.SetSceneItemEnabled(sceneItem.Scene, sceneItem.ItemId, true);
             }
@@ -91,10 +90,24 @@ namespace Hellbot.Service.Clients.OBS
         {
             if (sceneId is null) return;
 
-            if (_scenes.TryGetValue(sceneId, out var sceneItem))
+            var scenes = _optionsMonitor.CurrentValue.Scenes;
+            if (TryGetSceneItem(scenes, sceneId, out var sceneItem))
             {
                 API.SetSceneItemEnabled(sceneItem.Scene, sceneItem.ItemId, false);
             }
+        }
+
+        private static bool TryGetSceneItem(Dictionary<string, SceneItem> scenes, string sceneId, [NotNullWhen(true)] out SceneItem? sceneItem)
+        {
+            if (scenes.TryGetValue(sceneId, out sceneItem) && sceneItem is not null)
+                return true;
+
+            var withEquals = sceneId.Replace(':', '=');
+            if (withEquals != sceneId && scenes.TryGetValue(withEquals, out sceneItem) && sceneItem is not null)
+                return true;
+
+            sceneItem = null;
+            return false;
         }
     }
 }
