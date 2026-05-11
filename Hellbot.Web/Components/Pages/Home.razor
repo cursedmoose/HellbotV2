@@ -1,9 +1,113 @@
 ﻿@page "/"
+@using Hellbot.Core.Events.Session
+@using Hellbot.UI.Services
+@inject EventFeed Feed
+@implements IDisposable
 @rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Hellbot</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
 
-Welcome to your new app.
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-3 d-flex flex-column"
+                  Elevation="2"
+                  Style="height: 280px; overflow: hidden;">
+            <div class="d-flex align-center justify-space-between mb-2 flex-shrink-0">
+                <MudText Typo="Typo.h6">Service status</MudText>
+                <MudLink Href="service-status" Typo="Typo.caption">Details</MudLink>
+            </div>
+            <div class="flex-grow-1" style="min-height: 0; overflow-y: auto;">
+                <MudTable Items="@Feed.ServiceStatusRows"
+                          Dense="true"
+                          Hover="true"
+                          Bordered="false"
+                          @key="Feed.ServiceStatusTableVersion">
+                <HeaderContent>
+                    <MudTh>Platform</MudTh>
+                    <MudTh>Status</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="row">
+                    <MudTd>@row.Platform</MudTd>
+                    <MudTd>
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="@StatusColor(row.Status)">
+                            @row.Status
+                        </MudChip>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+            </div>
+        </MudPaper>
+    </MudItem>
 
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-3 d-flex flex-column"
+                  Elevation="2"
+                  Style="height: 280px; overflow: hidden;">
+            <div class="d-flex align-center justify-space-between mb-2 flex-shrink-0">
+                <MudText Typo="Typo.h6">Event feed</MudText>
+                <MudLink Href="events" Typo="Typo.caption">Live feed</MudLink>
+            </div>
+            <div class="flex-grow-1" style="min-height: 0; overflow-y: auto;">
+                <MudTable Items="@Feed.HubEvents"
+                          Dense="true"
+                          Hover="true"
+                          Bordered="false"
+                          @key="Feed.HubEvents.Count">
+                    <HeaderContent>
+                        <MudTh>Timestamp</MudTh>
+                        <MudTh>Type</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="evt">
+                        <MudTd Style="white-space: nowrap;">
+                            @evt.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff")
+                        </MudTd>
+                        <MudTd Style="word-break:break-word;">@evt.Type</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </div>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudPaper Class="pa-3 d-flex flex-column"
+                  Elevation="2"
+                  Style="height: 420px; overflow: hidden;">
+            <div class="d-flex align-center justify-space-between mb-2 flex-shrink-0">
+                <MudText Typo="Typo.h6">Unified chat</MudText>
+                <MudLink Href="chat" Typo="Typo.caption">Table view</MudLink>
+            </div>
+            <div class="flex-grow-1 mud-typography-body2"
+                 style="min-height: 0; overflow-y: auto; font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace; line-height: 1.45;">
+                @foreach (var row in Feed.ChatLines)
+                {
+                    <div class="mb-1" style="word-break: break-word;" @key="@($"{row.TimestampDisplay}|{row.UserDisplay}|{row.Source}|{row.Message}")">
+                        <strong>@row.UserDisplay</strong><span> [@row.Source]: </span>@row.Message
+                    </div>
+                }
+            </div>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Feed.EnsureServiceStatusSnapshotAsync();
+        Feed.Changed += OnFeedChanged;
+    }
+
+    private void OnFeedChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Feed.Changed -= OnFeedChanged;
+
+    private static Color StatusColor(ConnectionState status) => status switch
+    {
+        ConnectionState.Connected => Color.Success,
+        ConnectionState.Disconnected => Color.Error,
+        _ => Color.Default
+    };
+}
