@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Hellbot.Core.Events;
+using Hellbot.Core.Events.Audio;
 using Hellbot.Core.Events.Chat;
 using Hellbot.Core.Events.Session;
 using Hellbot.UI.Components.Model;
@@ -92,31 +93,58 @@ public sealed class EventFeed : IAsyncDisposable
 
     private void ApplyChatEvent(HubEventMessage raw)
     {
-        if (raw.Type != nameof(ChatMessageReceived))
+        if (raw.Type == nameof(ChatMessageReceived))
+        {
+            ChatReceivedPayload? payload;
+            try
+            {
+                payload = raw.Data.Deserialize<ChatReceivedPayload>(ChatJsonOptions);
+            }
+            catch
+            {
+                return;
+            }
+
+            if (payload is null)
+                return;
+
+            var userDisplay = raw.User is { } u ? (u.Username ?? u.UserId) : "—";
+            var sourceDisplay = raw.Source.ToString();
+
+            PrependChatLine(new ChatFeedLine(
+                raw.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                sourceDisplay,
+                userDisplay,
+                payload.Message));
+            return;
+        }
+
+        if (raw.Type != nameof(VoiceTranscriptionCompleted))
             return;
 
-        ChatReceivedPayload? payload;
+        VoiceTranscriptionPayload? vtPayload;
         try
         {
-            payload = raw.Data.Deserialize<ChatReceivedPayload>(ChatJsonOptions);
+            vtPayload = raw.Data.Deserialize<VoiceTranscriptionPayload>(ChatJsonOptions);
         }
         catch
         {
             return;
         }
 
-        if (payload is null)
+        if (vtPayload is null)
             return;
 
-        var userDisplay = raw.User is { } u ? (u.Username ?? u.UserId) : "—";
-        var sourceDisplay = raw.Source.ToString();
-
-        _chatLines.Insert(0, new ChatFeedLine(
+        PrependChatLine(new ChatFeedLine(
             raw.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"),
-            sourceDisplay,
-            userDisplay,
-            payload.Message));
+            "Mic",
+            "CursedMoose",
+            vtPayload.Text));
+    }
 
+    private void PrependChatLine(ChatFeedLine line)
+    {
+        _chatLines.Insert(0, line);
         while (_chatLines.Count > MaxChatLines)
             _chatLines.RemoveAt(_chatLines.Count - 1);
     }
