@@ -28,7 +28,8 @@ namespace Hellbot.Service.Status
         [
             PlatformSource.Twitch,
             PlatformSource.Playnite,
-            PlatformSource.OBS
+            PlatformSource.OBS,
+            PlatformSource.StreamSession
         ];
 
         /// <summary>

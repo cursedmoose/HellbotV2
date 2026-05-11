@@ -1,4 +1,5 @@
 using Hellbot.Core.Events;
+using Hellbot.Core.Events.Session;
 using Hellbot.Core.Sessions;
 using Hellbot.Service.Config;
 using Microsoft.Extensions.Options;
@@ -7,6 +8,7 @@ namespace Hellbot.Service.Sessions
 {
     public class StreamSessionManager(
         IOptions<StreamSessionOptions> options,
+        IEventBus eventBus,
         IEnumerable<IStreamingChannelUpdater> channelUpdaters) : IStreamSessionManager
     {
         private readonly Dictionary<PlatformSource, IStreamingChannelUpdater> _channelUpdaters =
@@ -50,36 +52,51 @@ namespace Hellbot.Service.Sessions
 
         public StreamSession StartOrAddDestination(StreamSessionStartInfo info)
         {
+            bool wasActive;
+            StreamSession result;
             lock (_lock)
             {
+                wasActive = IsActive;
                 if (_currentSession != null && _currentSession.IsActive)
                 {
                     ApplyMetadata(_currentSession, info.Metadata, info.SourcePlatform);
                     TryAddDestination(_currentSession, info.Destination);
                     RefreshSnapshot();
-                    return _currentSession;
+                    result = _currentSession;
                 }
-
-                _currentSession = new StreamSession
+                else
                 {
-                    Id = Guid.NewGuid(),
-                    StartedAt = info.StartedAt,
-                    Metadata = new StreamMetadata()
-                };
-                ApplyMetadata(_currentSession, info.Metadata, info.SourcePlatform);
-                TryAddDestination(_currentSession, info.Destination);
-                RefreshSnapshot();
-                return _currentSession;
+                    _currentSession = new StreamSession
+                    {
+                        Id = Guid.NewGuid(),
+                        StartedAt = info.StartedAt,
+                        Metadata = new StreamMetadata()
+                    };
+                    ApplyMetadata(_currentSession, info.Metadata, info.SourcePlatform);
+                    TryAddDestination(_currentSession, info.Destination);
+                    RefreshSnapshot();
+                    result = _currentSession;
+                }
             }
+
+            if (wasActive != IsActive)
+            {
+                PublishStreamSessionStatus();
+            }
+
+            return result;
         }
 
         public bool RemoveDestination(StreamSessionStopInfo info, DateTimeOffset stoppedAt, out StreamSession? endedSession)
         {
             endedSession = null;
+            var wasActive = false;
             lock (_lock)
             {
                 if (_currentSession == null || !_currentSession.IsActive)
                     return false;
+
+                wasActive = IsActive;
 
                 var list = _currentSession.Destinations;
                 var removed = list.RemoveAll(d =>
@@ -97,8 +114,27 @@ namespace Hellbot.Service.Sessions
                 }
 
                 RefreshSnapshot();
-                return true;
             }
+
+            if (wasActive != IsActive)
+            {
+                PublishStreamSessionStatus();
+            }
+
+            return true;
+        }
+
+        private void PublishStreamSessionStatus()
+        {
+            eventBus.Publish(new WebsocketStateChanged
+            {
+                Source = new EventSource(PlatformSource.StreamSession),
+                Data = new WebsocketStatePayload
+                {
+                    Status = IsActive ? ConnectionState.Connected : ConnectionState.Disconnected,
+                    Details = null
+                }
+            });
         }
 
         private void RefreshSnapshot()

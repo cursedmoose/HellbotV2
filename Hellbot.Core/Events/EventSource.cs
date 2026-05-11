@@ -8,7 +8,8 @@
         Twitch,
         Hellbot,
         Playnite,
-        OBS
+        OBS,
+        StreamSession
     }
 
     public sealed record EventSource(PlatformSource Platform, string? Channel = null)
