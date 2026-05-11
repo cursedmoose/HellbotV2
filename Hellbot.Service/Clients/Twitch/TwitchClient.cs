@@ -42,6 +42,7 @@ namespace Hellbot.Service.Clients.Twitch
                 "channel:manage:broadcast",
                 "channel:read:ads",
                 "channel:read:subscriptions",
+                "bits:read",
                 "channel:edit:commercial",
                 "clips:edit"
             ];

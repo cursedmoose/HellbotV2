@@ -13,4 +13,7 @@ public static class StatKeys
 
     /// <seealso cref="Hellbot.Core.Events.Users.UserSubscribed"/>
     public const string TimesSubscribed = "times_subscribed";
+
+    /// <seealso cref="Hellbot.Core.Events.MonetaryBacking.TrackMonetaryBacking"/>
+    public const string BackerPoints = "backer_points";
 }

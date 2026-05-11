@@ -3,6 +3,7 @@ using Hellbot.Core.Events.Context;
 using Hellbot.Core.Events.Chat;
 using Hellbot.Core.Events.Moderation;
 using Hellbot.Core.Events.Session;
+using Hellbot.Core.Events.MonetaryBacking;
 using Hellbot.Core.Events.Users;
 using Hellbot.Core.Users;
 using Hellbot.Core.Sessions;
@@ -66,6 +67,8 @@ namespace Hellbot.Service.EventBus.Producers
             _eventSubWebsocketClient.ChannelModerateV2 += OnChannelModerateV2;
             _eventSubWebsocketClient.ChannelFollow += OnChannelFollow;
             _eventSubWebsocketClient.ChannelSubscribe += OnChannelSubscribe;
+            _eventSubWebsocketClient.ChannelCheer += OnChannelCheer;
+            _eventSubWebsocketClient.ChannelSubscriptionGift += OnChannelSubscriptionGift;
 
             _eventSubWebsocketClient.StreamOnline += OnStreamOnline;
             _eventSubWebsocketClient.StreamOffline += OnStreamOffline;
@@ -93,6 +96,7 @@ namespace Hellbot.Service.EventBus.Producers
 
                 await SubscribeTo("channel.subscribe", "1", [BROADCASTER_ID]);
                 await SubscribeTo("channel.subscription.gift", "1", [BROADCASTER_ID]);
+                await SubscribeTo("channel.cheer", "1", [BROADCASTER_ID]);
                 await SubscribeTo("channel.follow", "2", [BROADCASTER_ID, MODERATOR_ID]);
 
                 await SubscribeTo("channel.poll.begin", "1", [BROADCASTER_ID]);
@@ -203,6 +207,14 @@ namespace Hellbot.Service.EventBus.Producers
             };
             return new EventContext { Sender = new SenderContext { Identity = identity } };
         }
+
+        private static long BackingPointsForSubscriptionTier(string tier) => tier switch
+        {
+            "1000" => 500L,
+            "2000" => 1000L,
+            "3000" => 2500L,
+            _ => 0L,
+        };
 
         private async Task OnChannelChatMessage(object? sender, ChannelChatMessageArgs e)
         {
@@ -421,20 +433,104 @@ namespace Hellbot.Service.EventBus.Producers
             });
         }
 
-        private Task OnChannelSubscribe(object? sender, ChannelSubscribeArgs e)
+        private async Task OnChannelSubscribe(object? sender, ChannelSubscribeArgs e)
         {
             var ev = e.Payload.Event;
-            if (!string.Equals(ev.BroadcasterUserId, ResolvedBroadcasterId, StringComparison.Ordinal))
-                return Task.CompletedTask;
 
-            return _bus.Publish(new UserSubscribed
+            var context = CreateContext(ev.UserId, ev.UserName);
+
+            await _bus.Publish(new UserSubscribed
             {
-                Context = CreateContext(ev.UserId, ev.UserName),
+                Context = context,
                 Data = new()
                 {
                     Tier = ev.Tier,
                 },
                 Source = EventSource.Twitch
+            });
+
+            var basePoints = BackingPointsForSubscriptionTier(ev.Tier);
+            if (basePoints == 0)
+            {
+                _logger.LogWarning("channel.subscribe: unsupported tier {Tier}, skipping TrackMonetaryBacking", ev.Tier);
+                return;
+            }
+
+            long points = basePoints;
+            if (ev.IsGift) 
+            {
+                points /= 5L;
+            }
+
+            await _bus.Publish(new TrackMonetaryBacking
+            {
+                Context = context,
+                Data = new()
+                {
+                    Kind = MonetaryBackingKind.Subscription,
+                    Amount = 1,
+                    Message = $"Channel subscription (tier {ev.Tier})",
+                    PointsAwarded = points,
+                },
+                Source = EventSource.Twitch,
+            });
+        }
+
+        private async Task OnChannelCheer(object? sender, ChannelCheerArgs e)
+        {
+            var ev = e.Payload.Event;
+
+            if (ev.IsAnonymous || string.IsNullOrEmpty(ev.UserId))
+                return;
+
+            if (ev.Bits <= 0)
+                return;
+
+            await _bus.Publish(new TrackMonetaryBacking
+            {
+                Context = CreateContext(ev.UserId, ev.UserName),
+                Data = new()
+                {
+                    Kind = MonetaryBackingKind.Bits,
+                    Amount = ev.Bits,
+                    Message = $"Cheered {ev.Bits} bits",
+                    PointsAwarded = ev.Bits,
+                },
+                Source = EventSource.Twitch,
+            });
+        }
+
+        private async Task OnChannelSubscriptionGift(object? sender, ChannelSubscriptionGiftArgs e)
+        {
+            var ev = e.Payload.Event;
+
+            if (ev.IsAnonymous || string.IsNullOrEmpty(ev.UserId))
+                return;
+
+            if (ev.Total <= 0)
+                return;
+
+            var perSub = BackingPointsForSubscriptionTier(ev.Tier);
+            if (perSub == 0)
+            {
+                _logger.LogWarning("channel.subscription.gift: unsupported tier {Tier}, skipping TrackMonetaryBacking", ev.Tier);
+                return;
+            }
+
+            long points = checked(perSub * ev.Total);
+            var context = CreateContext(ev.UserId, ev.UserName);
+
+            await _bus.Publish(new TrackMonetaryBacking
+            {
+                Context = context,
+                Data = new()
+                {
+                    Kind = MonetaryBackingKind.GiftedSubscription,
+                    Amount = ev.Total,
+                    Message = $"Gifted {ev.Total} subscription(s) (tier {ev.Tier})",
+                    PointsAwarded = points,
+                },
+                Source = EventSource.Twitch,
             });
         }
 
