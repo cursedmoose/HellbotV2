@@ -7,22 +7,24 @@
 @implements IDisposable
 @rendermode InteractiveServer
 
-<h3>Live Events</h3>
+<PageTitle>Live events</PageTitle>
 
-<!-- FILTERS -->
-<div style="margin-bottom:10px;">
-    <b>Filter:</b>
+<MudText Typo="Typo.h4" Class="mb-3">Live events</MudText>
 
-    @foreach (var type in Feed.HubEvents.Select(e => e.Type).Distinct().OrderBy(x => x))
-    {
-        <label style="margin-right:10px;">
-            <input type="checkbox"
-                   checked="@selectedTypes.Contains(type)"
-                   @onchange="e => ToggleType(type, (bool)e.Value!)" />
-            @type
-        </label>
-    }
-</div>
+<MudPaper Class="pa-3 mb-4" Outlined="true" Elevation="0">
+    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-2">Filter by type</MudText>
+    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+        @foreach (var type in Feed.HubEvents.Select(e => e.Type).Distinct().OrderBy(x => x))
+        {
+            <MudCheckBox T="bool"
+                         Value="@selectedTypes.Contains(type)"
+                         ValueChanged="@(enabled => ToggleType(type, enabled))"
+                         Label="@type"
+                         Color="Color.Primary"
+                         Dense="true" />
+        }
+    </MudStack>
+</MudPaper>
 
 <MudPaper Class="pa-3">
 

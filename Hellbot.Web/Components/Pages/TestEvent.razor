@@ -1,12 +1,15 @@
 ﻿@page "/events/test"
 @rendermode InteractiveServer
-<h3>Test Event</h3>
 
 @inject IHttpClientFactory HttpFactory
 
-<button class="btn btn-primary" @onclick="SendTestEvent">Send Test Event</button>
+<PageTitle>Test event</PageTitle>
 
-<p role="status">Current count: @currentCount</p>
+<MudText Typo="Typo.h4" Class="mb-4">Test event</MudText>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendTestEvent">Send test event</MudButton>
+
+<MudText Typo="Typo.body2" Class="mt-3" role="status">Current count: @currentCount</MudText>
 
 @code {
     private int currentCount = 0;

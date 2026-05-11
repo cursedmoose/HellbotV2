@@ -5,7 +5,9 @@
 @implements IDisposable
 @rendermode InteractiveServer
 
-<h3>Service status</h3>
+<PageTitle>Service status</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-3">Service status</MudText>
 
 <MudPaper Class="pa-3">
     <MudTable Items="@Feed.ServiceStatusRows"
