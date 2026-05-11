@@ -50,7 +50,7 @@ public sealed class UserStatsFlushWorker(
     {
         try
         {
-            logger.LogInformation("Flushing User Stats");
+            logger.LogDebug("Flushing User Stats");
             using var scope = scopeFactory.CreateScope();
             var table = scope.ServiceProvider.GetRequiredService<UserStatTable>();
             await recorder.FlushPendingAsync(table, ct);

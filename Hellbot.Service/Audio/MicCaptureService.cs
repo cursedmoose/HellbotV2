@@ -119,7 +119,7 @@ namespace Hellbot.Service.Audio
 
         public void PublishVoiceSegment(DateTimeOffset now)
         {
-            logger.LogInformation("Segment bytes: {Bytes}", _audioBuffer.Count);
+            logger.LogDebug("Segment bytes: {Bytes}", _audioBuffer.Count);
             bus.Publish(new VoiceSegmentCaptured
             {
                 Data = new()
