@@ -22,6 +22,28 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.top-row ::deep .hb-brand-link {
+    font-size: 1.35rem !important;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #ffffff !important;
+}
+
+.top-row ::deep .hb-brand-link:hover {
+    color: #e2e8f0 !important;
+}
+
+.nav-scrollable ::deep .hb-nav-menu .mud-nav-link:not(.mud-nav-link-disabled) {
+    font-size: 1.0625rem;
+    min-height: 2.75rem;
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+}
+
+.nav-scrollable ::deep .hb-nav-menu .mud-nav-link:not(.mud-nav-link-disabled) .mud-svg-icon-root {
+    font-size: 1.4rem;
+}
+
 .nav-scrollable ::deep .mud-nav-link:not(.mud-nav-link-disabled),
 .nav-scrollable ::deep .mud-nav-link:not(.mud-nav-link-disabled) .mud-nav-link-text {
     color: #cbd5e1;
