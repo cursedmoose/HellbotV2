@@ -8,6 +8,7 @@ namespace Hellbot.Service.Clients.ElevenLabs
     public class ElevenLabsClient(IOptions<ElevenLabsOptions> options)
     {
         public readonly External.ElevenLabsClient API = new(options.Value.ApiKey);
+        public readonly Dictionary<string, VoiceCatalogEntry> Voices = options.Value.Voices;
 
         public Task<byte[]> GenerateTts(
             string voiceKey,

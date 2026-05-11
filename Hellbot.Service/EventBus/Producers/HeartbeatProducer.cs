@@ -14,7 +14,7 @@ namespace Hellbot.Service.EventBus.Producers
 
                 await bus.Publish(evt);
 
-                await Task.Delay(60_000, stoppingToken);
+                await Task.Delay(300_000, stoppingToken);
             }
         }
     }

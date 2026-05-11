@@ -1,19 +1,26 @@
-﻿using Hellbot.Core.Tts;
-using Hellbot.Service.Data.Tables;
+﻿using Hellbot.Service.Clients.ElevenLabs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hellbot.Service.Controllers
 {
-    [Route("voice")]
+    [Route("voices")]
     [ApiController]
-    public class VoicesController(VoiceTable db): ControllerBase
+    public class VoicesController(ElevenLabsClient client): ControllerBase
     {
-        [HttpPost]
-        public async Task<IActionResult> PostVoice(string Id, string Name)
+        [HttpGet]
+        public IActionResult GetVoices()
         {
-            var voiceProfile = new Voice(Id, Name, Settings: new());
-            await db.InsertAsync(voiceProfile);
-            return Ok();
+            return Ok(client.Voices);
+        }
+
+        [HttpGet("{voiceId}")]
+        public IActionResult GetVoice(string voiceId)
+        {
+            if (client.Voices.TryGetValue(voiceId, out var voice))
+            {
+                return Ok(voice);
+            }
+            return NotFound();
         }
     }
 }
