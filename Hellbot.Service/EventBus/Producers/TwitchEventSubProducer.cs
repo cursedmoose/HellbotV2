@@ -61,6 +61,7 @@ namespace Hellbot.Service.EventBus.Producers
             _eventSubWebsocketClient.ChannelChatMessageDelete += OnChannelChatMessageDelete;
 
             // Moderation Hooks
+            _eventSubWebsocketClient.ChannelModerateV2 += OnChannelModerateV2;
             _eventSubWebsocketClient.ChannelBan += OnChannelBan;
             _eventSubWebsocketClient.ChannelUnban += OnChannelUnban;
             _eventSubWebsocketClient.ChannelFollow += OnChannelFollow;
@@ -88,6 +89,7 @@ namespace Hellbot.Service.EventBus.Producers
             {
                 // https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/
                 await SubscribeTo("channel.chat.message", "1", [BROADCASTER_ID, USER_ID]);
+                await SubscribeTo("channel.chat.message_delete", "1", [BROADCASTER_ID, USER_ID]);
 
                 await SubscribeTo("channel.subscribe", "1", [BROADCASTER_ID]);
                 await SubscribeTo("channel.subscription.gift", "1", [BROADCASTER_ID]);
@@ -106,6 +108,8 @@ namespace Hellbot.Service.EventBus.Producers
 
                 await SubscribeTo("stream.online", "1", [BROADCASTER_ID]);
                 await SubscribeTo("stream.offline", "1", [BROADCASTER_ID]);
+
+                await SubscribeTo("channel.moderate", "2", [BROADCASTER_ID, MODERATOR_ID]);
             }
 
             await PublishWebsocketStatus(ConnectionState.Connected, _eventSubWebsocketClient.SessionId);
@@ -249,6 +253,21 @@ namespace Hellbot.Service.EventBus.Producers
             };
 
             await _bus.Publish(hellbotEvent);
+        }
+
+        private Task OnChannelModerateV2(object? sender, ChannelModerateV2Args e)
+        {
+            var ev = e.Payload.Event;
+            var shared = !string.IsNullOrEmpty(ev.SourceBroadcasterUserId)
+                && !string.Equals(ev.SourceBroadcasterUserId, ev.BroadcasterUserId, StringComparison.Ordinal);
+            _logger.LogInformation(
+                "channel.moderate v2: Action={Action} BroadcasterUserId={BroadcasterUserId} ModeratorUserId={ModeratorUserId} SourceBroadcasterUserId={SourceBroadcasterUserId} SharedChat={SharedChat}",
+                ev.Action,
+                ev.BroadcasterUserId,
+                ev.ModeratorUserId,
+                ev.SourceBroadcasterUserId,
+                shared);
+            return Task.CompletedTask;
         }
 
         private async Task OnChannelBan(object? sender, ChannelBanArgs e)
