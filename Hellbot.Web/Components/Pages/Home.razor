@@ -2,7 +2,8 @@
 @using Hellbot.Core.Events.Session
 @using Hellbot.UI.Services
 @inject EventFeed Feed
-@implements IDisposable
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 @rendermode InteractiveServer
 
 <PageTitle>Hellbot</PageTitle>
@@ -80,7 +81,8 @@
                 <MudText Typo="Typo.h6">Unified chat</MudText>
                 <MudLink Href="chat" Typo="Typo.caption">Table view</MudLink>
             </div>
-            <div class="flex-grow-1 mud-typography-body2"
+            <div @ref="_chatScrollRegion"
+                 class="flex-grow-1 mud-typography-body2"
                  style="min-height: 0; overflow-y: auto; font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace; line-height: 1.45;">
                 @foreach (var row in Feed.ChatLines)
                 {
@@ -94,15 +96,84 @@
 </MudGrid>
 
 @code {
+    private ElementReference _chatScrollRegion;
+    private IJSObjectReference? _chatScrollJs;
+    private int _chatLineCountSnapshot;
+    private bool _scrollChatAfterRender;
+
     protected override async Task OnInitializedAsync()
     {
         await Feed.EnsureServiceStatusSnapshotAsync();
+        _chatLineCountSnapshot = Feed.ChatLines.Count;
         Feed.Changed += OnFeedChanged;
     }
 
-    private void OnFeedChanged() => _ = InvokeAsync(StateHasChanged);
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _chatScrollJs = await JS.InvokeAsync<IJSObjectReference>("import", "./js/chat-scroll.js");
+            }
+            catch
+            {
+                return;
+            }
 
-    public void Dispose() => Feed.Changed -= OnFeedChanged;
+            if (Feed.ChatLines.Count > 0)
+                _scrollChatAfterRender = true;
+        }
+
+        if (!_scrollChatAfterRender || _chatScrollJs is null)
+            return;
+
+        try
+        {
+            await _chatScrollJs.InvokeVoidAsync("scrollToBottom", _chatScrollRegion);
+        }
+        catch
+        {
+            // Ignore during prerender or before the scroll region exists.
+        }
+
+        _scrollChatAfterRender = false;
+    }
+
+    private void OnFeedChanged() =>
+        _ = InvokeAsync(async () =>
+        {
+            var count = Feed.ChatLines.Count;
+            var grew = count > _chatLineCountSnapshot;
+            _chatLineCountSnapshot = count;
+
+            if (grew)
+            {
+                if (_chatScrollJs is null)
+                    _scrollChatAfterRender = true;
+                else
+                {
+                    try
+                    {
+                        _scrollChatAfterRender =
+                            await _chatScrollJs.InvokeAsync<bool>("isNearBottom", _chatScrollRegion);
+                    }
+                    catch
+                    {
+                        _scrollChatAfterRender = false;
+                    }
+                }
+            }
+
+            StateHasChanged();
+        });
+
+    public async ValueTask DisposeAsync()
+    {
+        Feed.Changed -= OnFeedChanged;
+        if (_chatScrollJs is not null)
+            await _chatScrollJs.DisposeAsync();
+    }
 
     private static Color StatusColor(ConnectionState status) => status switch
     {

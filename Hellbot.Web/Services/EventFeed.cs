@@ -111,7 +111,7 @@ public sealed class EventFeed : IAsyncDisposable
             var userDisplay = raw.User is { } u ? (u.Username ?? u.UserId) : "—";
             var sourceDisplay = raw.Source.ToString();
 
-            PrependChatLine(new ChatFeedLine(
+            AppendChatLine(new ChatFeedLine(
                 raw.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"),
                 sourceDisplay,
                 userDisplay,
@@ -135,18 +135,18 @@ public sealed class EventFeed : IAsyncDisposable
         if (vtPayload is null)
             return;
 
-        PrependChatLine(new ChatFeedLine(
+        AppendChatLine(new ChatFeedLine(
             raw.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"),
             "Mic",
             "CursedMoose",
             vtPayload.Text));
     }
 
-    private void PrependChatLine(ChatFeedLine line)
+    private void AppendChatLine(ChatFeedLine line)
     {
-        _chatLines.Insert(0, line);
+        _chatLines.Add(line);
         while (_chatLines.Count > MaxChatLines)
-            _chatLines.RemoveAt(_chatLines.Count - 1);
+            _chatLines.RemoveAt(0);
     }
 
     private void ApplyHubLogEvent(HubEventMessage raw)
