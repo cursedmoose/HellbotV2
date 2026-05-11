@@ -14,6 +14,7 @@ using TwitchLib.Api.Helix.Models.EventSub;
 using TwitchLib.EventSub.Core.EventArgs;
 using TwitchLib.EventSub.Core.EventArgs.Channel;
 using TwitchLib.EventSub.Core.EventArgs.Stream;
+using TwitchLib.EventSub.Core.Models.Moderate;
 using TwitchLib.EventSub.Websockets;
 using TwitchLib.EventSub.Websockets.Core.EventArgs;
 
@@ -63,8 +64,6 @@ namespace Hellbot.Service.EventBus.Producers
 
             // Moderation Hooks
             _eventSubWebsocketClient.ChannelModerateV2 += OnChannelModerateV2;
-            _eventSubWebsocketClient.ChannelBan += OnChannelBan;
-            _eventSubWebsocketClient.ChannelUnban += OnChannelUnban;
             _eventSubWebsocketClient.ChannelFollow += OnChannelFollow;
             _eventSubWebsocketClient.ChannelSubscribe += OnChannelSubscribe;
 
@@ -256,49 +255,153 @@ namespace Hellbot.Service.EventBus.Producers
             await _bus.Publish(hellbotEvent);
         }
 
-        private Task OnChannelModerateV2(object? sender, ChannelModerateV2Args e)
+        private async Task OnChannelModerateV2(object? sender, ChannelModerateV2Args e)
         {
             var ev = e.Payload.Event;
-            var shared = !string.IsNullOrEmpty(ev.SourceBroadcasterUserId)
-                && !string.Equals(ev.SourceBroadcasterUserId, ev.BroadcasterUserId, StringComparison.Ordinal);
-            _logger.LogInformation(
-                "channel.moderate v2: Action={Action} BroadcasterUserId={BroadcasterUserId} ModeratorUserId={ModeratorUserId} SourceBroadcasterUserId={SourceBroadcasterUserId} SharedChat={SharedChat}",
-                ev.Action,
-                ev.BroadcasterUserId,
-                ev.ModeratorUserId,
-                ev.SourceBroadcasterUserId,
-                shared);
-            return Task.CompletedTask;
+            if (!string.Equals(ev.BroadcasterUserId, _userId, StringComparison.Ordinal))
+                return;
+
+            if (string.IsNullOrEmpty(ev.ModeratorUserId))
+            {
+                _logger.LogWarning("channel.moderate v2: missing ModeratorUserId for action {Action}", ev.Action);
+                return;
+            }
+
+            var context = CreateContext(ev.ModeratorUserId, ev.ModeratorUserName);
+
+            switch (ev.Action)
+            {
+                case "ban":
+                    await PublishUserBannedAsync(ev.Ban, context);
+                    break;
+                case "unban":
+                    await PublishUserUnbannedAsync(ev.Unban, context);
+                    break;
+                case "timeout":
+                    await PublishUserMutedAsync(ev.Timeout, context);
+                    break;
+                case "untimeout":
+                    await PublishUserUnmutedAsync(ev.Untimeout, context);
+                    break;
+                case "mod":
+                    await PublishUserModdedAsync(ev.Mod, context);
+                    break;
+                case "unmod":
+                    await PublishUserUnmoddedAsync(ev.Unmod, context);
+                    break;
+            }
         }
 
-        private async Task OnChannelBan(object? sender, ChannelBanArgs e)
+        private async Task PublishUserBannedAsync(Ban? ban, EventContext context)
         {
-            var hellbotEvent = new UserBanned
+            if (ban is null || string.IsNullOrEmpty(ban.UserId))
             {
+                if (ban is not null && string.IsNullOrEmpty(ban.UserId))
+                    _logger.LogWarning("channel.moderate v2: ban payload missing UserId");
+                return;
+            }
+
+            await _bus.Publish(new UserBanned
+            {
+                Context = context,
                 Data = new()
                 {
-                    UserId = e.Payload.Event.UserId,
-                    Reason = e.Payload.Event.Reason,
-                    BannedAt = e.Payload.Event.BannedAt
+                    UserId = ban.UserId,
+                    Reason = ban.Reason ?? "",
+                    BannedAt = DateTimeOffset.UtcNow,
                 },
                 Source = EventSource.Twitch,
-            };
-
-            await _bus.Publish(hellbotEvent);
+            });
         }
 
-        private async Task OnChannelUnban(object? sender, ChannelUnbanArgs e)
+        private async Task PublishUserUnbannedAsync(Unban? unban, EventContext context)
         {
-            var hellbotEvent = new UserUnbanned
+            if (unban is null || string.IsNullOrEmpty(unban.UserId))
             {
+                if (unban is not null && string.IsNullOrEmpty(unban.UserId))
+                    _logger.LogWarning("channel.moderate v2: unban payload missing UserId");
+                return;
+            }
+
+            await _bus.Publish(new UserUnbanned
+            {
+                Context = context,
+                Data = new() { UserId = unban.UserId },
+                Source = EventSource.Twitch,
+            });
+        }
+
+        private async Task PublishUserMutedAsync(global::TwitchLib.EventSub.Core.Models.Moderate.Timeout? timeout, EventContext context)
+        {
+            if (timeout is null || string.IsNullOrEmpty(timeout.UserId))
+            {
+                if (timeout is not null && string.IsNullOrEmpty(timeout.UserId))
+                    _logger.LogWarning("channel.moderate v2: timeout payload missing UserId");
+                return;
+            }
+
+            await _bus.Publish(new UserMuted
+            {
+                Context = context,
                 Data = new()
                 {
-                    UserId = e.Payload.Event.UserId
+                    UserId = timeout.UserId,
+                    ExpiresAt = timeout.ExpiresAt,
+                    Reason = timeout.Reason,
                 },
                 Source = EventSource.Twitch,
-            };
+            });
+        }
 
-            await _bus.Publish(hellbotEvent);
+        private async Task PublishUserUnmutedAsync(Untimeout? untimeout, EventContext context)
+        {
+            if (untimeout is null || string.IsNullOrEmpty(untimeout.UserId))
+            {
+                if (untimeout is not null && string.IsNullOrEmpty(untimeout.UserId))
+                    _logger.LogWarning("channel.moderate v2: untimeout payload missing UserId");
+                return;
+            }
+
+            await _bus.Publish(new UserUnmuted
+            {
+                Context = context,
+                Data = new() { UserId = untimeout.UserId },
+                Source = EventSource.Twitch,
+            });
+        }
+
+        private async Task PublishUserModdedAsync(Moderator? mod, EventContext context)
+        {
+            if (mod is null || string.IsNullOrEmpty(mod.UserId))
+            {
+                if (mod is not null && string.IsNullOrEmpty(mod.UserId))
+                    _logger.LogWarning("channel.moderate v2: mod payload missing UserId");
+                return;
+            }
+
+            await _bus.Publish(new UserModded
+            {
+                Context = context,
+                Data = new() { UserId = mod.UserId },
+                Source = EventSource.Twitch,
+            });
+        }
+
+        private async Task PublishUserUnmoddedAsync(Moderator? unmod, EventContext context)
+        {
+            if (unmod is null || string.IsNullOrEmpty(unmod.UserId))
+            {
+                if (unmod is not null && string.IsNullOrEmpty(unmod.UserId))
+                    _logger.LogWarning("channel.moderate v2: unmod payload missing UserId");
+                return;
+            }
+
+            await _bus.Publish(new UserUnmodded
+            {
+                Context = context,
+                Data = new() { UserId = unmod.UserId },
+                Source = EventSource.Twitch,
+            });
         }
 
         private Task OnChannelFollow(object? sender, ChannelFollowArgs e)
