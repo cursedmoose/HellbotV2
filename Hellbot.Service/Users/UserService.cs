@@ -97,6 +97,20 @@ public sealed class UserService(
         return true;
     }
 
+    public async Task<bool> TryDowngradeRoleAsync(Guid userId, Role targetRole, CancellationToken cancellationToken = default)
+    {
+        var user = await users.Get(userId);
+        if (user is null)
+            return false;
+
+        if (targetRole >= user.Role)
+            return true;
+
+        var downgraded = user with { Role = targetRole };
+        await UpdateUserAndInvalidateCache(downgraded);
+        return true;
+    }
+
     private async Task<User> CreateUser(UserIdentity snapshot)
     {
         using var tx = db.Connection.BeginTransaction();
