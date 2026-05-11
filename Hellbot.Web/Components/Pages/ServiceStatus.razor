@@ -40,7 +40,6 @@
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await Feed.EnsureStartedAsync();
         await Feed.EnsureServiceStatusSnapshotAsync();
         Feed.Changed += OnFeedChanged;
     }

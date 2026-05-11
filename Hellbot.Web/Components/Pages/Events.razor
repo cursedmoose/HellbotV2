@@ -100,9 +100,8 @@
     private string sortColumn = nameof(HubEventMessage.Timestamp);
     private bool sortAsc = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await Feed.EnsureStartedAsync();
         ApplyAutoSelectForNewTypes();
         Feed.Changed += OnFeedChanged;
     }

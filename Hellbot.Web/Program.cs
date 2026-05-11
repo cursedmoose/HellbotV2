@@ -1,6 +1,7 @@
 using Hellbot.UI.Components;
 using Hellbot.UI.Configuration;
 using Hellbot.UI.Services;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 
@@ -22,6 +23,7 @@ builder.Services.AddHttpClient("api", (sp, client) =>
 });
 
 builder.Services.AddScoped<EventFeed>();
+builder.Services.AddScoped<CircuitHandler, EventFeedCircuitHandler>();
 
 var app = builder.Build();
 

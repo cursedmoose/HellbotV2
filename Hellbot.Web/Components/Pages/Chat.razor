@@ -31,9 +31,8 @@
 </MudPaper>
 
 @code {
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await Feed.EnsureStartedAsync();
         Feed.Changed += OnFeedChanged;
     }
 
