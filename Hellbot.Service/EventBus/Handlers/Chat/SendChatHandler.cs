@@ -19,6 +19,9 @@ namespace Hellbot.Service.EventBus.Handlers.Chat
                 case PlatformSource.API:
                     logger.LogInformation("{Message}", message);
                     return;
+                default:
+                    logger.LogWarning("Cannot send Message={Message} to Platform={Platform}.", message, platform);
+                    return;
             }
         }
     }

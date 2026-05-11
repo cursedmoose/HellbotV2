@@ -1,4 +1,5 @@
-﻿using Hellbot.Core.Events;
+﻿using Hellbot.Core.Commands;
+using Hellbot.Core.Events;
 using Hellbot.Core.Events.Chat;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,5 +14,9 @@ namespace Hellbot.Service.Controllers
         [HttpPost("chat/receive")]
         public Task<IActionResult> ReceiveChatMessage(ChatReceivedPayload evt)
             => Publish(new ChatMessageReceived { Data = evt, Source = EventSource.API });
+
+        [HttpPost("chat/command")]
+        public Task<IActionResult> SendCommand(CommandContext evt)
+            => Publish(new CommandRequested { Data = evt, Source = EventSource.API });
     }
 }
