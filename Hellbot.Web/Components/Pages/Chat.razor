@@ -1,23 +1,18 @@
 @page "/chat"
-@using Hellbot.Core.Events
-@using Hellbot.Core.Events.Chat
-@using Hellbot.UI.Configuration
-@using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Options
-@using System.Text.Json
-@inject IOptions<HellbotApiOptions> ApiOptions
-@implements IAsyncDisposable
+@using Hellbot.UI.Services
+@inject EventFeed Feed
+@implements IDisposable
 @rendermode InteractiveServer
 
 <h3>Unified chat</h3>
 
 <MudPaper Class="pa-3">
-    <MudTable Items="lines"
+    <MudTable Items="Feed.ChatLines"
               Dense="true"
               Hover="true"
               Striped="true"
               Bordered="false"
-              @key="lines.Count">
+              @key="Feed.ChatLines.Count">
 
         <HeaderContent>
             <MudTh>Timestamp</MudTh>
@@ -36,70 +31,13 @@
 </MudPaper>
 
 @code {
-    private const int MaxLines = 500;
-
-    private readonly List<ChatLine> lines = [];
-    private HubConnection? hubConnection;
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
-
     protected override async Task OnInitializedAsync()
     {
-        var hubUrl = $"{ApiOptions.Value.BaseUrl.TrimEnd('/')}/eventsHub";
-        hubConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl)
-            .WithAutomaticReconnect()
-            .Build();
-
-        hubConnection.On<HubEventMessage>("ReceiveEvent", raw =>
-        {
-            if (raw.Type != nameof(ChatMessageReceived))
-                return;
-
-            ChatReceivedPayload? payload;
-            try
-            {
-                payload = raw.Data.Deserialize<ChatReceivedPayload>(JsonOptions);
-            }
-            catch
-            {
-                return;
-            }
-
-            if (payload is null)
-                return;
-
-            var id = raw.Id == Guid.Empty ? Guid.NewGuid() : raw.Id;
-            var userDisplay = raw.User is { } u ? (u.Username ?? u.UserId) : "—";
-            var sourceDisplay = raw.Source.ToString();
-
-            lines.Insert(0, new ChatLine(
-                raw.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                sourceDisplay,
-                userDisplay,
-                payload.Message));
-
-            while (lines.Count > MaxLines)
-                lines.RemoveAt(lines.Count - 1);
-
-            InvokeAsync(StateHasChanged);
-        });
-
-        await hubConnection.StartAsync();
+        await Feed.EnsureStartedAsync();
+        Feed.Changed += OnFeedChanged;
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        if (hubConnection is not null)
-            await hubConnection.DisposeAsync();
-    }
+    private void OnFeedChanged() => _ = InvokeAsync(StateHasChanged);
 
-    private sealed record ChatLine(
-        string TimestampDisplay,
-        string Source,
-        string UserDisplay,
-        string Message);
+    public void Dispose() => Feed.Changed -= OnFeedChanged;
 }

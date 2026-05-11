@@ -1,11 +1,10 @@
 ﻿@page "/events"
 @using Hellbot.Core.Events
 @using Hellbot.UI.Components.Extensions
-@using Hellbot.UI.Configuration
-@using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Options
+@using Hellbot.UI.Services
 @using System.Text.Json
-@inject IOptions<HellbotApiOptions> ApiOptions
+@inject EventFeed Feed
+@implements IDisposable
 @rendermode InteractiveServer
 
 <h3>Live Events</h3>
@@ -14,7 +13,7 @@
 <div style="margin-bottom:10px;">
     <b>Filter:</b>
 
-    @foreach (var type in uniqueEventTypes.OrderBy(x => x))
+    @foreach (var type in Feed.HubEvents.Select(e => e.Type).Distinct().OrderBy(x => x))
     {
         <label style="margin-right:10px;">
             <input type="checkbox"
@@ -32,7 +31,7 @@
               Hover="true"
               Striped="true"
               Bordered="false"
-              @key="events.Count">
+              @key="Feed.HubEvents.Count">
 
         <HeaderContent>
             <MudTh></MudTh>
@@ -94,65 +93,44 @@
 
 @code {
 
-    // =========================
-    // STATE
-    // =========================
-
-    private List<HubEventMessage> events = new();
     private HashSet<Guid> expanded = new();
     private HashSet<string> selectedTypes = new();
-    private List<string> uniqueEventTypes = new();
+    private readonly HashSet<string> typesSeenForAutoSelect = new();
 
     private string sortColumn = nameof(HubEventMessage.Timestamp);
     private bool sortAsc = false;
 
-    private HubConnection? hubConnection;
-
-    // =========================
-    // INIT
-    // =========================
-
     protected override async Task OnInitializedAsync()
     {
-        var hubUrl = $"{ApiOptions.Value.BaseUrl.TrimEnd('/')}/eventsHub";
-        hubConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl)
-            .WithAutomaticReconnect()
-            .Build();
-
-        hubConnection.On<HubEventMessage>("ReceiveEvent", raw =>
-        {
-            var evt = raw.Id == Guid.Empty ? raw with { Id = Guid.NewGuid() } : raw;
-
-            events.Insert(0, evt);
-
-            if (!uniqueEventTypes.Contains(evt.Type))
-            {
-                uniqueEventTypes.Add(evt.Type);
-                selectedTypes.Add(evt.Type); // auto-enable new types
-            }
-
-            if (events.Count > 100)
-                events.RemoveAt(events.Count - 1);
-
-            InvokeAsync(StateHasChanged);
-        });
-
-        await hubConnection.StartAsync();
+        await Feed.EnsureStartedAsync();
+        ApplyAutoSelectForNewTypes();
+        Feed.Changed += OnFeedChanged;
     }
 
-    // =========================
-    // FILTERED + SORTED DATA
-    // =========================
+    private void OnFeedChanged()
+    {
+        ApplyAutoSelectForNewTypes();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => Feed.Changed -= OnFeedChanged;
+
+    /// <summary>
+    /// First time we see an event type (in the shared feed), opt it into the filter selection — same as the old incremental hub callback.
+    /// </summary>
+    private void ApplyAutoSelectForNewTypes()
+    {
+        foreach (var t in Feed.HubEvents.Select(e => e.Type).Distinct())
+        {
+            if (typesSeenForAutoSelect.Add(t))
+                selectedTypes.Add(t);
+        }
+    }
 
     private IEnumerable<HubEventMessage> ProcessedEvents =>
-        events
+        Feed.HubEvents
             .Where(e => selectedTypes.Count == 0 || selectedTypes.Contains(e.Type))
             .OrderByDynamic(sortColumn, sortAsc);
-
-    // =========================
-    // UI ACTIONS
-    // =========================
 
     private void ToggleDetails(Guid id)
     {
@@ -184,14 +162,12 @@
         if (data is null)
             return "<null>";
 
-        // If it's already a JSON element, pretty print it
-        if (data is System.Text.Json.JsonElement json)
-            return JsonSerializer.Serialize(json, new JsonSerializerOptions { 
+        if (data is JsonElement json)
+            return JsonSerializer.Serialize(json, new JsonSerializerOptions {
                 WriteIndented = true,
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
 
-        // fallback
         return data.ToString() ?? "<empty>";
     }
 }

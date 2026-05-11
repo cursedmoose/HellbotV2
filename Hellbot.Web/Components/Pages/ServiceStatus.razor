@@ -1,27 +1,19 @@
 @page "/service-status"
-@using Hellbot.Core.Events
 @using Hellbot.Core.Events.Session
-@using Hellbot.UI.Components.Model
-@using Hellbot.UI.Configuration
-@using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Options
-@using System.Net.Http.Json
-@using System.Text.Json
-@using System.Text.Json.Serialization
-@inject IHttpClientFactory HttpClientFactory
-@inject IOptions<HellbotApiOptions> ApiOptions
-@implements IAsyncDisposable
+@using Hellbot.UI.Services
+@inject EventFeed Feed
+@implements IDisposable
 @rendermode InteractiveServer
 
 <h3>Service status</h3>
 
 <MudPaper Class="pa-3">
-    <MudTable Items="@rows"
+    <MudTable Items="@Feed.ServiceStatusRows"
               Dense="true"
               Hover="true"
               Striped="true"
               Bordered="false"
-              @key="tableVersion">
+              @key="Feed.ServiceStatusTableVersion">
 
         <HeaderContent>
             <MudTh>Platform</MudTh>
@@ -46,100 +38,16 @@
 </MudPaper>
 
 @code {
-    private readonly List<ServiceStatusRowDto> rows = [];
-    private int tableVersion;
-    private HubConnection? hubConnection;
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-    };
-
     protected override async Task OnInitializedAsync()
     {
-        await LoadSnapshotAsync();
-
-        var hubUrl = $"{ApiOptions.Value.BaseUrl.TrimEnd('/')}/eventsHub";
-        hubConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl)
-            .WithAutomaticReconnect()
-            .Build();
-
-        hubConnection.On<HubEventMessage>("ReceiveEvent", evt =>
-        {
-            if (evt.Type == nameof(WebsocketStateChanged)
-                && TryReadStatePayload(evt.Data, out var status, out var details))
-            {
-                var ix = rows.FindIndex(r => r.Platform == evt.Source.Platform);
-                if (ix >= 0)
-                {
-                    rows[ix] = new ServiceStatusRowDto
-                    {
-                        Platform = evt.Source.Platform,
-                        Status = status,
-                        Details = details,
-                        LastChanged = evt.Timestamp
-                    };
-                    tableVersion++;
-                    InvokeAsync(StateHasChanged);
-                }
-            }
-        });
-
-        await hubConnection.StartAsync();
+        await Feed.EnsureStartedAsync();
+        await Feed.EnsureServiceStatusSnapshotAsync();
+        Feed.Changed += OnFeedChanged;
     }
 
-    private async Task LoadSnapshotAsync()
-    {
-        var client = HttpClientFactory.CreateClient("api");
-        var list = await client.GetFromJsonAsync<List<ServiceStatusRowDto>>("service-status", JsonOptions);
-        if (list is null)
-            return;
+    private void OnFeedChanged() => _ = InvokeAsync(StateHasChanged);
 
-        rows.Clear();
-        rows.AddRange(list);
-        tableVersion++;
-    }
-
-    private static bool TryReadStatePayload(JsonElement data, out ConnectionState status, out string? details)
-    {
-        status = ConnectionState.Initialized;
-        details = null;
-
-        if (!TryGetPropertyIgnoreCase(data, "Status", out var stEl))
-            return false;
-
-        if (stEl.ValueKind == JsonValueKind.String)
-        {
-            if (!Enum.TryParse(stEl.GetString(), ignoreCase: true, out status))
-                return false;
-        }
-        else if (stEl.ValueKind == JsonValueKind.Number)
-            status = (ConnectionState)stEl.GetInt32();
-        else
-            return false;
-
-        if (TryGetPropertyIgnoreCase(data, "Details", out var dEl) && dEl.ValueKind == JsonValueKind.String)
-            details = dEl.GetString();
-
-        return true;
-    }
-
-    private static bool TryGetPropertyIgnoreCase(JsonElement el, string name, out JsonElement prop)
-    {
-        foreach (var p in el.EnumerateObject())
-        {
-            if (string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
-            {
-                prop = p.Value;
-                return true;
-            }
-        }
-
-        prop = default;
-        return false;
-    }
+    public void Dispose() => Feed.Changed -= OnFeedChanged;
 
     private static Color StatusColor(ConnectionState status) => status switch
     {
@@ -147,10 +55,4 @@
         ConnectionState.Disconnected => Color.Error,
         _ => Color.Default
     };
-
-    public async ValueTask DisposeAsync()
-    {
-        if (hubConnection is not null)
-            await hubConnection.DisposeAsync();
-    }
 }

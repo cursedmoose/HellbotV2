@@ -1,5 +1,6 @@
 using Hellbot.UI.Components;
 using Hellbot.UI.Configuration;
+using Hellbot.UI.Services;
 using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 
@@ -19,6 +20,8 @@ builder.Services.AddHttpClient("api", (sp, client) =>
     var baseUrl = sp.GetRequiredService<IOptions<HellbotApiOptions>>().Value.BaseUrl.TrimEnd('/') + "/";
     client.BaseAddress = new Uri(baseUrl);
 });
+
+builder.Services.AddScoped<EventFeed>();
 
 var app = builder.Build();
 
