@@ -1,6 +1,7 @@
 ﻿using Hellbot.Core.Events;
 using Hellbot.Core.Events.Context;
 using Hellbot.Core.Events.Chat;
+using Hellbot.Core.Events.Moderation;
 using Hellbot.Core.Events.Session;
 using Hellbot.Core.Events.Users;
 using Hellbot.Core.Users;
@@ -278,7 +279,6 @@ namespace Hellbot.Service.EventBus.Producers
                 {
                     UserId = e.Payload.Event.UserId,
                     Reason = e.Payload.Event.Reason,
-                    IsPermanent = e.Payload.Event.IsPermanent,
                     BannedAt = e.Payload.Event.BannedAt
                 },
                 Source = EventSource.Twitch,
