@@ -59,16 +59,15 @@ namespace Hellbot.Service.EventBus.Producers
             _eventSubWebsocketClient.WebsocketReconnected += OnWebsocketReconnected;
             _eventSubWebsocketClient.ErrorOccurred += OnErrorOccurred;
 
-            // Message Hooks
+            // Event Hooks
             _eventSubWebsocketClient.ChannelChatMessage += OnChannelChatMessage;
             _eventSubWebsocketClient.ChannelChatMessageDelete += OnChannelChatMessageDelete;
-
-            // Moderation Hooks
-            _eventSubWebsocketClient.ChannelModerateV2 += OnChannelModerateV2;
-            _eventSubWebsocketClient.ChannelFollow += OnChannelFollow;
-            _eventSubWebsocketClient.ChannelSubscribe += OnChannelSubscribe;
             _eventSubWebsocketClient.ChannelCheer += OnChannelCheer;
+            _eventSubWebsocketClient.ChannelFollow += OnChannelFollow;
+            _eventSubWebsocketClient.ChannelModerateV2 += OnChannelModerateV2;
+            _eventSubWebsocketClient.ChannelSubscribe += OnChannelSubscribe;
             _eventSubWebsocketClient.ChannelSubscriptionGift += OnChannelSubscriptionGift;
+            
 
             _eventSubWebsocketClient.StreamOnline += OnStreamOnline;
             _eventSubWebsocketClient.StreamOffline += OnStreamOffline;

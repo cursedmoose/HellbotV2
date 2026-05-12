@@ -24,27 +24,27 @@ namespace Hellbot.Service.Clients.Twitch
             _api.Settings.ClientId = _options.API.ClientId;
             _scopes =
             [
-                "user:read:chat",
-                "user:write:chat",
-                "moderator:read:chat_messages",
-                "moderator:read:blocked_terms",
-                "moderator:read:chat_settings",
-                "moderator:read:unban_requests",
-                "moderator:read:warnings",
-                "moderator:read:moderators",
-                "moderator:read:vips",
-                "moderator:manage:banned_users",
-                "moderator:read:chatters",
-                "moderator:read:followers",
+                "bits:read",
+                "channel:edit:commercial",
+                "channel:manage:broadcast",
                 "channel:manage:polls",
                 "channel:manage:predictions",
                 "channel:manage:redemptions",
-                "channel:manage:broadcast",
                 "channel:read:ads",
                 "channel:read:subscriptions",
-                "bits:read",
-                "channel:edit:commercial",
-                "clips:edit"
+                "clips:edit",
+                "moderator:manage:banned_users",
+                "moderator:read:blocked_terms",
+                "moderator:read:chat_messages",
+                "moderator:read:chat_settings",
+                "moderator:read:chatters",
+                "moderator:read:followers",
+                "moderator:read:moderators",
+                "moderator:read:unban_requests",
+                "moderator:read:vips",
+                "moderator:read:warnings",
+                "user:read:chat",
+                "user:write:chat",
             ];
 
             StartApi(_scopes).GetAwaiter().GetResult();
