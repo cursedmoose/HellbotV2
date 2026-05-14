@@ -4,7 +4,6 @@
     {
         public TwitchApiOptions API { get; set; } = new TwitchApiOptions();
         public string Channel { get; set; } = "";
-        public string ChannelId { get; set; } = "";
         public string Broadcaster { get; set; } = "";
         public string BroadcasterId { get; set; } = "";
     }

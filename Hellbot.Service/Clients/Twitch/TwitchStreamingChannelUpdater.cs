@@ -9,20 +9,15 @@ namespace Hellbot.Service.Clients.Twitch
     public sealed class TwitchStreamingChannelUpdater(IOptions<TwitchOptions> options, TwitchClient twitch)
         : IStreamingChannelUpdater
     {
-        private string EffectiveBroadcasterId =>
-            string.IsNullOrEmpty(options.Value.BroadcasterId)
-                ? options.Value.ChannelId
-                : options.Value.BroadcasterId;
-
         public PlatformSource Platform => PlatformSource.Twitch;
 
         public Task UpdateAsync(StreamDestination destination, string? gameId, string? title,
             CancellationToken cancellationToken = default)
         {
-            if (!string.Equals(destination.ChannelId, EffectiveBroadcasterId, StringComparison.Ordinal))
+            if (!string.Equals(destination.ChannelId, options.Value.BroadcasterId, StringComparison.Ordinal))
                 return Task.CompletedTask;
 
-            return twitch.ModifyChannelInformationAsync(destination.ChannelId, gameId, title);
+            return twitch.ModifyChannelInformationAsync(options.Value.BroadcasterId, gameId, title);
         }
     }
 }

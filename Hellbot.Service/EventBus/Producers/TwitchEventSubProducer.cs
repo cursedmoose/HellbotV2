@@ -31,9 +31,6 @@ namespace Hellbot.Service.EventBus.Producers
         private readonly TwitchClient _twitch;
         private readonly string _userId;
 
-        private string ResolvedBroadcasterId =>
-            string.IsNullOrEmpty(_options.BroadcasterId) ? _options.ChannelId : _options.BroadcasterId;
-
         private const string BROADCASTER_ID = "broadcaster_user_id";
         private const string MODERATOR_ID = "moderator_user_id";
         private const string USER_ID = "user_id";
@@ -51,7 +48,7 @@ namespace Hellbot.Service.EventBus.Producers
             _options = options.Value;
             _twitch = twitchClient;
             _eventSubWebsocketClient = eventSubWebsocketClient;
-            _userId = _options.ChannelId;
+            _userId = _options.BroadcasterId;
 
             // Connection Hooks
             _eventSubWebsocketClient.WebsocketConnected += OnWebsocketConnected;
@@ -67,7 +64,7 @@ namespace Hellbot.Service.EventBus.Producers
             _eventSubWebsocketClient.ChannelModerateV2 += OnChannelModerateV2;
             _eventSubWebsocketClient.ChannelSubscribe += OnChannelSubscribe;
             _eventSubWebsocketClient.ChannelSubscriptionGift += OnChannelSubscriptionGift;
-            
+
 
             _eventSubWebsocketClient.StreamOnline += OnStreamOnline;
             _eventSubWebsocketClient.StreamOffline += OnStreamOffline;
@@ -418,7 +415,7 @@ namespace Hellbot.Service.EventBus.Producers
         private Task OnChannelFollow(object? sender, ChannelFollowArgs e)
         {
             var ev = e.Payload.Event;
-            if (!string.Equals(ev.BroadcasterUserId, ResolvedBroadcasterId, StringComparison.Ordinal))
+            if (!string.Equals(ev.BroadcasterUserId, _options.BroadcasterId, StringComparison.Ordinal))
                 return Task.CompletedTask;
 
             return _bus.Publish(new UserFollowed

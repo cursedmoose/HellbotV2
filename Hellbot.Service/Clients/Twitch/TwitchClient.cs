@@ -78,19 +78,14 @@ namespace Hellbot.Service.Clients.Twitch
         {
             return API.Chat.SendChatMessage(new()
             {
-                BroadcasterId = _options.ChannelId,
-                SenderId = _options.ChannelId,
+                BroadcasterId = _options.BroadcasterId,
+                SenderId = _options.BroadcasterId,
                 Message = message
             });
         }
 
-        private string ResolvedBroadcasterId =>
-            string.IsNullOrEmpty(_options.BroadcasterId)
-                ? _options.ChannelId
-                : _options.BroadcasterId;
-
         public Task ModifyChannelInformationAsync(string? gameId, string? title) =>
-            ModifyChannelInformationAsync(ResolvedBroadcasterId, gameId, title);
+            ModifyChannelInformationAsync(_options.BroadcasterId, gameId, title);
 
         public Task ModifyChannelInformationAsync(string broadcasterId, string? gameId, string? title)
             => API.Channels.ModifyChannelInformationAsync(broadcasterId, new()
