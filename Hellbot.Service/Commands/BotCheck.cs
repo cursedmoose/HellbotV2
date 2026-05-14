@@ -13,9 +13,9 @@ namespace Hellbot.Service.Commands
 
         public override Role RequiredRole => Role.None;
 
-        public override void Handle(CommandContext context)
+        public override async Task Handle(CommandContext context)
         {
-            bus.Publish(new SendChatMessage
+            await bus.Publish(new SendChatMessage
             {
                 Data = new()
                 {

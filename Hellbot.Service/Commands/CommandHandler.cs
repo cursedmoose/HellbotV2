@@ -18,9 +18,10 @@ namespace Hellbot.Service.Commands
                 && MeetsCommandRequirements(context);
         }
 
-        public virtual void Handle(CommandContext context)
+        public virtual Task Handle(CommandContext context)
         {
             logger.LogInformation("Handling {Command}! Coming soon!!", Command);
+            return Task.CompletedTask;
         }
 
 
@@ -38,6 +39,11 @@ namespace Hellbot.Service.Commands
 
         private bool UserHasPermissions(CommandContext context)
         {
+            if (RequiredRole == Role.None)
+            {
+                return true;
+            }
+
             return context.User?.Info?.Role >= RequiredRole;
         }
     }

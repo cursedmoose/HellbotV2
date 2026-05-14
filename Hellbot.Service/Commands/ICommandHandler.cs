@@ -10,6 +10,6 @@ namespace Hellbot.Service.Commands
         public Role RequiredRole { get; }
 
         public bool CanHandle(CommandContext context);
-        public void Handle(CommandContext context);
+        public Task Handle(CommandContext context);
     }
 }
