@@ -20,6 +20,7 @@ using Hellbot.Service.EventBus.Handlers;
 using Hellbot.Service.Status;
 using Hellbot.Service.EventBus.Middleware;
 using Hellbot.Service.EventBus.Producers;
+using Hellbot.Service.EventBus.Twitch;
 using Hellbot.Service.Stats;
 using Hellbot.Service.Tts;
 using Hellbot.Service.Users;
@@ -99,6 +100,7 @@ builder.Services.AddHostedService<Hellbot.Service.Data.MigrationRunner>();
 // Event Bus
 builder.Services.AddSingleton<ServiceStatusProvider>();
 builder.Services.AddSingleton<IEventBus, HellbotEventBus>();
+builder.Services.AddSingleton<TwitchChannelPointsRedemptionInterpreter>();
 builder.Services.AddSingleton<ITtsPlaybackGate, TtsPlaybackGate>();
 builder.Services.AddSingleton<ITtsQueue, TtsQueue>();
 builder.Services.AddSingleton<IAudioPlayer, NAudioPlayer>();
