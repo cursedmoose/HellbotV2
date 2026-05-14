@@ -68,7 +68,7 @@ public sealed class SetPreferenceCommandHandler(
         {
             await SendAsync(
                 context,
-                $"You do not have access to voice '{entitlementId}'. Use !get voices to see your voices.");
+                $"You do not have access to voice '{entitlementId}'. Use !get voice to see your voices.");
             return;
         }
 
